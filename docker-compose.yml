@@ -29,10 +29,12 @@ services:
       - "3001:80"
     volumes:
       - ./data:/app/data
+      - ./case-data:/app/case-data
     environment:
       STORAGE_BACKEND: postgres
       DATABASE_URL: postgresql://chatgpt2api:chatgpt2api@db:5432/chatgpt2api
       CONTENT_DATABASE_URL: postgresql://chatgpt2api:chatgpt2api@db:5432/chatgpt2api
+      CONTENT_LIBRARY_SOURCE_DIR: /app/case-data
       CONTENT_LIBRARY_SEED: auto
       CHATGPT2API_AUTH_KEY: abcd.1234
 

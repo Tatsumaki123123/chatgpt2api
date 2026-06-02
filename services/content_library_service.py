@@ -3,7 +3,6 @@ from __future__ import annotations
 from datetime import datetime
 import json
 import os
-from pathlib import Path
 from typing import Any
 
 from sqlalchemy import Boolean, Column, DateTime, Integer, String, Text, UniqueConstraint, create_engine
@@ -11,10 +10,10 @@ from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import declarative_base, sessionmaker
 from sqlalchemy.types import JSON
 
+from services.content_paths import CONTENT_LIBRARY_SOURCE_DIR, RUNTIME_DATA_DIR
+
 ContentBase = declarative_base()
 JSON_FIELD = JSON().with_variant(JSONB(), "postgresql")
-BASE_DIR = Path(__file__).resolve().parents[1]
-DATA_DIR = BASE_DIR / "data"
 
 
 def _now() -> datetime:
@@ -100,7 +99,7 @@ def _database_url() -> str:
         return "postgresql://" + value.removeprefix("postgres://")
     if value:
         return value
-    return f"sqlite:///{(DATA_DIR / 'content_library.db').as_posix()}"
+    return f"sqlite:///{(RUNTIME_DATA_DIR / 'content_library.db').as_posix()}"
 
 
 def _as_dict(value: object) -> dict[str, Any]:
@@ -182,8 +181,8 @@ class ContentLibraryService:
         return self._session_factory
 
     def seed_from_data_dir(self, *, force: bool = False) -> dict[str, int]:
-        style_data = self._read_json(DATA_DIR / "style-library.json")
-        case_data = self._read_json(DATA_DIR / "cases.json")
+        style_data = self._read_json(CONTENT_LIBRARY_SOURCE_DIR / "style-library.json")
+        case_data = self._read_json(CONTENT_LIBRARY_SOURCE_DIR / "cases.json")
         categories = _as_list(style_data.get("categories"))
         templates = _as_list(style_data.get("templates"))
         styles = _as_list(style_data.get("styles"))

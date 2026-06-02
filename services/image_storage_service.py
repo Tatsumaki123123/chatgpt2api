@@ -14,6 +14,7 @@ from curl_cffi import requests
 from fastapi import HTTPException
 from PIL import Image
 
+from services.content_paths import CONTENT_LIBRARY_IMAGES_DIR
 from services.config import DATA_DIR, config
 
 IMAGE_INDEX_FILE = DATA_DIR / "image_index.json"
@@ -76,6 +77,17 @@ def _local_image_path(relative_path: str) -> Path:
     except ValueError as exc:
         raise HTTPException(status_code=404, detail="image not found") from exc
     return path
+
+
+def _content_library_image_path(relative_path: str) -> Path | None:
+    rel = _safe_relative_path(relative_path)
+    root = CONTENT_LIBRARY_IMAGES_DIR.resolve()
+    path = (root / rel).resolve()
+    try:
+        path.relative_to(root)
+    except ValueError:
+        return None
+    return path if path.is_file() else None
 
 
 def _read_json_object(path: Path) -> dict[str, object]:
@@ -250,6 +262,9 @@ class ImageStorageService:
         path = _local_image_path(safe_rel)
         if path.is_file():
             return path.read_bytes()
+        content_path = _content_library_image_path(safe_rel)
+        if content_path is not None:
+            return content_path.read_bytes()
         item = self._load_clean_index().get(safe_rel, {})
         if item.get("webdav"):
             return WebDAVClient(self.settings()).get(safe_rel)
@@ -260,6 +275,8 @@ class ImageStorageService:
         if not _is_image_rel(safe_rel):
             return False
         if _local_image_path(safe_rel).is_file():
+            return True
+        if _content_library_image_path(safe_rel) is not None:
             return True
         item = self._load_clean_index().get(safe_rel, {})
         return bool(item.get("webdav"))

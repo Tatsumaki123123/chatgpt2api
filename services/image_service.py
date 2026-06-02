@@ -11,6 +11,7 @@ from fastapi import HTTPException
 from fastapi.responses import FileResponse, Response
 from PIL import Image, ImageOps
 
+from services.content_paths import CONTENT_LIBRARY_IMAGES_DIR
 from services.config import config
 from services.image_storage_service import image_storage_service
 from services.image_tags_service import load_tags, remove_tags
@@ -50,9 +51,23 @@ def _safe_image_path(relative_path: str) -> Path:
     return path
 
 
+def _safe_content_image_path(relative_path: str) -> Path | None:
+    rel = _safe_relative_path(relative_path)
+    root = CONTENT_LIBRARY_IMAGES_DIR.resolve()
+    path = (root / rel).resolve()
+    try:
+        path.relative_to(root)
+    except ValueError:
+        return None
+    return path if path.is_file() else None
+
+
 def get_image_response(relative_path: str) -> FileResponse | Response:
     if image_storage_service.has_local(relative_path):
         return FileResponse(_safe_image_path(relative_path))
+    content_path = _safe_content_image_path(relative_path)
+    if content_path is not None:
+        return FileResponse(content_path)
     return Response(content=image_storage_service.get_bytes(relative_path), media_type="image/png")
 
 
@@ -80,6 +95,10 @@ def ensure_thumbnail(relative_path: str) -> Path:
     if image_storage_service.has_local(relative_path):
         source = _safe_image_path(relative_path)
         source_mtime = source.stat().st_mtime
+    else:
+        source = _safe_content_image_path(relative_path)
+        if source is not None:
+            source_mtime = source.stat().st_mtime
     if target.exists() and (not source_mtime or target.stat().st_mtime >= source_mtime):
         return target
 
@@ -107,6 +126,9 @@ def get_image_download_response(relative_path: str) -> FileResponse:
     if image_storage_service.has_local(relative_path):
         path = _safe_image_path(relative_path)
         return FileResponse(path, filename=path.name)
+    content_path = _safe_content_image_path(relative_path)
+    if content_path is not None:
+        return FileResponse(content_path, filename=content_path.name)
     rel = _safe_relative_path(relative_path)
     return Response(
         content=image_storage_service.get_bytes(rel),

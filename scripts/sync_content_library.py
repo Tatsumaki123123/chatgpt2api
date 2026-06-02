@@ -15,11 +15,10 @@ from services.content_library_service import content_library_service  # noqa: E4
 
 def main() -> int:
     result = content_library_service.seed_from_data_dir(force=True)
-    print("Content library synced from data/")
+    print("Content library synced from case-data/")
     print(result)
     return 0
 
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

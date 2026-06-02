@@ -3,11 +3,12 @@ from __future__ import annotations
 import os
 from typing import Any
 
-from fastapi import APIRouter, Header, HTTPException, Query, Request
+from fastapi import APIRouter, File, Header, HTTPException, Query, Request, UploadFile
 from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel, ConfigDict
 
 from api.support import extract_bearer_token, require_admin
+from services.content_image_service import content_image_service
 from services.content_library_service import content_library_service
 
 
@@ -62,6 +63,29 @@ def create_router() -> APIRouter:
     async def admin_overview(authorization: str | None = Header(default=None)):
         require_admin(authorization)
         return await run_in_threadpool(content_library_service.overview)
+
+    @router.post("/api/content/sync")
+    async def sync_content_library(authorization: str | None = Header(default=None)):
+        require_admin(authorization)
+        result = await run_in_threadpool(content_library_service.seed_from_data_dir, force=True)
+        return {"result": result, "overview": await run_in_threadpool(content_library_service.overview)}
+
+    @router.post("/api/content/images")
+    async def upload_content_image(
+        file: UploadFile = File(...),
+        authorization: str | None = Header(default=None),
+    ):
+        require_admin(authorization)
+        payload = await file.read()
+        try:
+            item = await run_in_threadpool(
+                content_image_service.save,
+                payload,
+                file.filename or "image.png",
+            )
+        except HTTPException:
+            raise
+        return {"item": item}
 
     @router.get("/api/content/categories")
     async def admin_categories(authorization: str | None = Header(default=None)):

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 import tempfile
+from io import BytesIO
 from pathlib import Path
 from unittest import TestCase, mock
 
@@ -9,8 +10,10 @@ os.environ.setdefault("CHATGPT2API_AUTH_KEY", "test-auth-key")
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+from PIL import Image
 
 import api.content as content_module
+from services.content_image_service import ContentImageService
 from services.content_library_service import ContentLibraryService
 
 
@@ -21,10 +24,14 @@ class ContentLibraryApiTests(TestCase):
         self.service = ContentLibraryService(lambda: f"sqlite:///{database_path.as_posix()}")
         self.service.initialize()
         self.service_patcher = mock.patch.object(content_module, "content_library_service", self.service)
+        self.image_service = ContentImageService(Path(self.tmpdir.name) / "case-images")
+        self.image_service_patcher = mock.patch.object(content_module, "content_image_service", self.image_service)
         self.admin_patcher = mock.patch.object(content_module, "require_admin", lambda authorization=None: {"role": "admin"})
         self.service_patcher.start()
+        self.image_service_patcher.start()
         self.admin_patcher.start()
         self.addCleanup(self.service_patcher.stop)
+        self.addCleanup(self.image_service_patcher.stop)
         self.addCleanup(self.admin_patcher.stop)
         self.addCleanup(self.tmpdir.cleanup)
         app = FastAPI()
@@ -100,6 +107,18 @@ class ContentLibraryApiTests(TestCase):
         search_templates = self.client.get("/api/content/templates?q=poster")
         self.assertEqual(search_templates.status_code, 200, search_templates.text)
         self.assertEqual(search_templates.json()["items"][0]["id"], "tpl-poster")
+
+    def test_upload_content_image_saves_to_case_data_directory(self):
+        buffer = BytesIO()
+        Image.new("RGB", (2, 2), color=(255, 0, 0)).save(buffer, format="PNG")
+        response = self.client.post(
+            "/api/content/images",
+            files={"file": ("sample.png", buffer.getvalue(), "image/png")},
+        )
+        self.assertEqual(response.status_code, 200, response.text)
+        payload = response.json()["item"]
+        self.assertTrue(payload["path"].startswith("/images/"))
+        self.assertTrue((self.image_service.images_dir / payload["relativePath"]).is_file())
 
 
 if __name__ == "__main__":

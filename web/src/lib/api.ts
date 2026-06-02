@@ -352,6 +352,14 @@ export type ContentCaseListResponse = {
   pageSize: number;
 };
 
+export type ContentImageUploadResult = {
+  path: string;
+  relativePath: string;
+  url: string;
+  name: string;
+  size: number;
+};
+
 export async function login(authKey: string) {
   const normalizedAuthKey = String(authKey || "").trim();
   return httpRequest<LoginResponse>("/auth/login", {
@@ -781,6 +789,15 @@ export async function saveContentCase(item: ContentCase, originalId?: number) {
 export async function deleteContentCase(caseId: number) {
   return httpRequest<{ ok: boolean }>(`/api/content/cases/${caseId}`, {
     method: "DELETE",
+  });
+}
+
+export async function uploadContentImage(file: File) {
+  const formData = new FormData();
+  formData.append("file", file);
+  return httpRequest<{ item: ContentImageUploadResult }>("/api/content/images", {
+    method: "POST",
+    body: formData,
   });
 }
 

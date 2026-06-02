@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   CirclePlus,
   FileText,
@@ -16,6 +16,7 @@ import {
   Trash2,
   Layers3,
   ImageIcon,
+  Upload,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -39,6 +40,7 @@ import {
   saveContentCase,
   saveContentCategory,
   saveContentTemplate,
+  uploadContentImage,
   type ContentCase,
   type ContentCategory,
   type ContentOverview,
@@ -246,52 +248,51 @@ function CategoryDialog({
     <Dialog open={open} onOpenChange={(next) => (!next ? onClose() : null)}>
       <DialogContent className="max-h-[90vh] overflow-y-auto rounded-2xl">
         <DialogHeader>
-          <DialogTitle>{originalValue ? "编辑分类" : "新增分类"}</DialogTitle>
+          <DialogTitle>{originalValue ? "缂傛牞绶崚鍡欒" : "閺傛澘顤冮崚鍡欒"}</DialogTitle>
         </DialogHeader>
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="sm:col-span-2">
-            <FieldLabel>唯一值</FieldLabel>
+            <FieldLabel>閸烆垯绔撮崐?/FieldLabel>
             <Input value={value.value} onChange={(e) => onChange({ ...value, value: e.target.value })} placeholder="Posters & Typography" />
           </label>
           <label>
-            <FieldLabel>中文标题</FieldLabel>
+            <FieldLabel>娑擃厽鏋冮弽鍥暯</FieldLabel>
             <Input value={value.zhTitle} onChange={(e) => onChange({ ...value, zhTitle: e.target.value })} />
           </label>
           <label>
-            <FieldLabel>英文标题</FieldLabel>
+            <FieldLabel>閼昏鲸鏋冮弽鍥暯</FieldLabel>
             <Input value={value.enTitle} onChange={(e) => onChange({ ...value, enTitle: e.target.value })} />
           </label>
           <label>
-            <FieldLabel>中文描述</FieldLabel>
+            <FieldLabel>娑擃厽鏋冮幓蹇氬牚</FieldLabel>
             <Textarea value={value.zhDescription} onChange={(e) => onChange({ ...value, zhDescription: e.target.value })} className="min-h-24" />
           </label>
           <label>
-            <FieldLabel>英文描述</FieldLabel>
+            <FieldLabel>閼昏鲸鏋冮幓蹇氬牚</FieldLabel>
             <Textarea value={value.enDescription} onChange={(e) => onChange({ ...value, enDescription: e.target.value })} className="min-h-24" />
           </label>
           <label>
-            <FieldLabel>封面</FieldLabel>
+            <FieldLabel>鐏忎線娼?/FieldLabel>
             <Input value={value.cover} onChange={(e) => onChange({ ...value, cover: e.target.value })} placeholder="/images/category-covers/poster.jpg" />
           </label>
           <label>
-            <FieldLabel>锚点</FieldLabel>
+            <FieldLabel>闁挎氨鍋?/FieldLabel>
             <Input value={value.anchor} onChange={(e) => onChange({ ...value, anchor: e.target.value })} />
           </label>
           <label>
-            <FieldLabel>模板锚点</FieldLabel>
+            <FieldLabel>濡剝婢橀柨姘卞仯</FieldLabel>
             <Input value={value.templateAnchor} onChange={(e) => onChange({ ...value, templateAnchor: e.target.value })} />
           </label>
           <label>
-            <FieldLabel>排序</FieldLabel>
+            <FieldLabel>閹烘帒绨?/FieldLabel>
             <Input type="number" value={value.sortOrder} onChange={(e) => onChange({ ...value, sortOrder: e.target.value })} />
           </label>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>取消</Button>
+          <Button variant="outline" onClick={onClose}>閸欐牗绉?/Button>
           <Button onClick={onSave} disabled={saving}>
             {saving ? <LoaderCircle className="size-4 animate-spin" /> : null}
-            保存
-          </Button>
+            娣囨繂鐡?          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -321,7 +322,7 @@ function TemplateDialog({
     <Dialog open={open} onOpenChange={(next) => (!next ? onClose() : null)}>
       <DialogContent className="max-h-[90vh] overflow-y-auto rounded-2xl">
         <DialogHeader>
-          <DialogTitle>{originalId ? "编辑模板" : "新增模板"}</DialogTitle>
+          <DialogTitle>{originalId ? "缂傛牞绶Ο鈩冩緲" : "閺傛澘顤冨Ο鈩冩緲"}</DialogTitle>
         </DialogHeader>
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="sm:col-span-2">
@@ -329,80 +330,80 @@ function TemplateDialog({
             <Input value={value.id} onChange={(e) => onChange({ ...value, id: e.target.value })} placeholder="tpl-poster" />
           </label>
           <label>
-            <FieldLabel>中文标题</FieldLabel>
+            <FieldLabel>娑擃厽鏋冮弽鍥暯</FieldLabel>
             <Input value={value.zhTitle} onChange={(e) => onChange({ ...value, zhTitle: e.target.value })} />
           </label>
           <label>
-            <FieldLabel>英文标题</FieldLabel>
+            <FieldLabel>閼昏鲸鏋冮弽鍥暯</FieldLabel>
             <Input value={value.enTitle} onChange={(e) => onChange({ ...value, enTitle: e.target.value })} />
           </label>
           <label>
-            <FieldLabel>中文描述</FieldLabel>
+            <FieldLabel>娑擃厽鏋冮幓蹇氬牚</FieldLabel>
             <Textarea value={value.zhDescription} onChange={(e) => onChange({ ...value, zhDescription: e.target.value })} className="min-h-24" />
           </label>
           <label>
-            <FieldLabel>英文描述</FieldLabel>
+            <FieldLabel>閼昏鲸鏋冮幓蹇氬牚</FieldLabel>
             <Textarea value={value.enDescription} onChange={(e) => onChange({ ...value, enDescription: e.target.value })} className="min-h-24" />
           </label>
           <label>
-            <FieldLabel>分类</FieldLabel>
+            <FieldLabel>閸掑棛琚?/FieldLabel>
             <Select value={value.category} onValueChange={(next) => onChange({ ...value, category: next })}>
-              <SelectTrigger><SelectValue placeholder="选择分类" /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder="闁瀚ㄩ崚鍡欒" /></SelectTrigger>
               <SelectContent>
                 {categories.map((item) => <SelectItem key={item.value} value={item.value}>{item.value}</SelectItem>)}
               </SelectContent>
             </Select>
           </label>
           <label>
-            <FieldLabel>锚点</FieldLabel>
+            <FieldLabel>闁挎氨鍋?/FieldLabel>
             <Input value={value.anchor} onChange={(e) => onChange({ ...value, anchor: e.target.value })} />
           </label>
           <label>
-            <FieldLabel>封面</FieldLabel>
+            <FieldLabel>鐏忎線娼?/FieldLabel>
             <Input value={value.cover} onChange={(e) => onChange({ ...value, cover: e.target.value })} />
           </label>
           <label>
-            <FieldLabel>排序</FieldLabel>
+            <FieldLabel>閹烘帒绨?/FieldLabel>
             <Input type="number" value={value.sortOrder} onChange={(e) => onChange({ ...value, sortOrder: e.target.value })} />
           </label>
           <label>
-            <FieldLabel>风格</FieldLabel>
+            <FieldLabel>妞嬪孩鐗?/FieldLabel>
             <Textarea value={value.styles} onChange={(e) => onChange({ ...value, styles: e.target.value })} className="min-h-20" placeholder="Poster, Typography" />
           </label>
           <label>
-            <FieldLabel>场景</FieldLabel>
+            <FieldLabel>閸︾儤娅?/FieldLabel>
             <Textarea value={value.scenes} onChange={(e) => onChange({ ...value, scenes: e.target.value })} className="min-h-20" placeholder="Commerce, Social" />
           </label>
           <label>
-            <FieldLabel>标签</FieldLabel>
+            <FieldLabel>閺嶅洨顒?/FieldLabel>
             <Textarea value={value.tags} onChange={(e) => onChange({ ...value, tags: e.target.value })} className="min-h-20" />
           </label>
           <label>
-            <FieldLabel>示例案例</FieldLabel>
+            <FieldLabel>缁€杞扮伐濡楀牅绶?/FieldLabel>
             <Textarea value={value.exampleCases} onChange={(e) => onChange({ ...value, exampleCases: e.target.value })} className="min-h-20" placeholder="1, 2, 3" />
           </label>
           <label>
-            <FieldLabel>中文适用场景</FieldLabel>
+            <FieldLabel>娑擃厽鏋冮柅鍌滄暏閸︾儤娅?/FieldLabel>
             <Textarea value={value.zhUseWhen} onChange={(e) => onChange({ ...value, zhUseWhen: e.target.value })} className="min-h-24" />
           </label>
           <label>
-            <FieldLabel>英文适用场景</FieldLabel>
+            <FieldLabel>閼昏鲸鏋冮柅鍌滄暏閸︾儤娅?/FieldLabel>
             <Textarea value={value.enUseWhen} onChange={(e) => onChange({ ...value, enUseWhen: e.target.value })} className="min-h-24" />
           </label>
           <label>
-            <FieldLabel>中文建议</FieldLabel>
+            <FieldLabel>娑擃厽鏋冨楦款唴</FieldLabel>
             <Textarea value={value.guidanceZh} onChange={(e) => onChange({ ...value, guidanceZh: e.target.value })} className="min-h-24" />
           </label>
           <label>
-            <FieldLabel>英文建议</FieldLabel>
+            <FieldLabel>閼昏鲸鏋冨楦款唴</FieldLabel>
             <Textarea value={value.guidanceEn} onChange={(e) => onChange({ ...value, guidanceEn: e.target.value })} className="min-h-24" />
           </label>
           <label>
-            <FieldLabel>中文避坑</FieldLabel>
+            <FieldLabel>娑擃厽鏋冮柆鍨綑</FieldLabel>
             <Textarea value={value.pitfallsZh} onChange={(e) => onChange({ ...value, pitfallsZh: e.target.value })} className="min-h-24" />
           </label>
           <label>
-            <FieldLabel>英文避坑</FieldLabel>
+            <FieldLabel>閼昏鲸鏋冮柆鍨綑</FieldLabel>
             <Textarea value={value.pitfallsEn} onChange={(e) => onChange({ ...value, pitfallsEn: e.target.value })} className="min-h-24" />
           </label>
           <label className="sm:col-span-2">
@@ -411,11 +412,10 @@ function TemplateDialog({
           </label>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>取消</Button>
+          <Button variant="outline" onClick={onClose}>閸欐牗绉?/Button>
           <Button onClick={onSave} disabled={saving}>
             {saving ? <LoaderCircle className="size-4 animate-spin" /> : null}
-            保存
-          </Button>
+            娣囨繂鐡?          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -429,6 +429,8 @@ function CaseDialog({
   onClose,
   onSave,
   saving,
+  onUploadImage,
+  uploadingImage,
   originalId,
   categories,
 }: {
@@ -438,14 +440,18 @@ function CaseDialog({
   onClose: () => void;
   onSave: () => void;
   saving: boolean;
+  onUploadImage: (file: File) => void;
+  uploadingImage: boolean;
   originalId?: number | null;
   categories: ContentCategory[];
 }) {
+  const imageInputRef = useRef<HTMLInputElement | null>(null);
+
   return (
     <Dialog open={open} onOpenChange={(next) => (!next ? onClose() : null)}>
       <DialogContent className="max-h-[90vh] overflow-y-auto rounded-2xl">
         <DialogHeader>
-          <DialogTitle>{originalId ? "编辑案例" : "新增案例"}</DialogTitle>
+          <DialogTitle>{originalId ? "缂傛牞绶鍫滅伐" : "閺傛澘顤冨鍫滅伐"}</DialogTitle>
         </DialogHeader>
         <div className="grid gap-4 sm:grid-cols-2">
           <label>
@@ -453,7 +459,7 @@ function CaseDialog({
             <Input value={value.id} onChange={(e) => onChange({ ...value, id: e.target.value })} placeholder="484" />
           </label>
           <label>
-            <FieldLabel>状态</FieldLabel>
+            <FieldLabel>閻樿埖鈧?/FieldLabel>
             <Select value={value.status} onValueChange={(next) => onChange({ ...value, status: next as ContentCase["status"] })}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -464,40 +470,69 @@ function CaseDialog({
             </Select>
           </label>
           <label className="sm:col-span-2">
-            <FieldLabel>标题</FieldLabel>
+            <FieldLabel>閺嶅洭顣?/FieldLabel>
             <Input value={value.title} onChange={(e) => onChange({ ...value, title: e.target.value })} />
           </label>
           <label className="sm:col-span-2">
-            <FieldLabel>图片</FieldLabel>
-            <Input value={value.image} onChange={(e) => onChange({ ...value, image: e.target.value })} />
+            <FieldLabel>閸ュ墽澧?/FieldLabel>
+            <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+              <Input
+                value={value.image}
+                onChange={(e) => onChange({ ...value, image: e.target.value })}
+                className="sm:flex-1"
+                placeholder="/images/case_1710000000_xxx.jpg"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => imageInputRef.current?.click()}
+                disabled={uploadingImage}
+              >
+                {uploadingImage ? <LoaderCircle className="size-4 animate-spin" /> : <Upload className="size-4" />}
+                涓婁紶
+              </Button>
+              <input
+                ref={imageInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(event) => {
+                  const file = event.currentTarget.files?.[0];
+                  event.currentTarget.value = "";
+                  if (file) {
+                    void onUploadImage(file);
+                  }
+                }}
+              />
+            </div>
           </label>
           <label>
-            <FieldLabel>图片说明</FieldLabel>
+            <FieldLabel>閸ュ墽澧栫拠瀛樻</FieldLabel>
             <Input value={value.imageAlt} onChange={(e) => onChange({ ...value, imageAlt: e.target.value })} />
           </label>
           <label>
-            <FieldLabel>来源标签</FieldLabel>
+            <FieldLabel>閺夈儲绨弽鍥╊劮</FieldLabel>
             <Input value={value.sourceLabel} onChange={(e) => onChange({ ...value, sourceLabel: e.target.value })} />
           </label>
           <label className="sm:col-span-2">
-            <FieldLabel>来源链接</FieldLabel>
+            <FieldLabel>閺夈儲绨柧鐐复</FieldLabel>
             <Input value={value.sourceUrl} onChange={(e) => onChange({ ...value, sourceUrl: e.target.value })} />
           </label>
           <label className="sm:col-span-2">
-            <FieldLabel>Github 链接</FieldLabel>
+            <FieldLabel>Github 闁剧偓甯?/FieldLabel>
             <Input value={value.githubUrl} onChange={(e) => onChange({ ...value, githubUrl: e.target.value })} />
           </label>
           <label>
-            <FieldLabel>分类</FieldLabel>
+            <FieldLabel>閸掑棛琚?/FieldLabel>
             <Select value={value.category} onValueChange={(next) => onChange({ ...value, category: next })}>
-              <SelectTrigger><SelectValue placeholder="选择分类" /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder="闁瀚ㄩ崚鍡欒" /></SelectTrigger>
               <SelectContent>
                 {categories.map((item) => <SelectItem key={item.value} value={item.value}>{item.value}</SelectItem>)}
               </SelectContent>
             </Select>
           </label>
           <label>
-            <FieldLabel>推荐</FieldLabel>
+            <FieldLabel>閹恒劏宕?/FieldLabel>
             <div className="flex h-11 items-center rounded-2xl border px-3">
               <input
                 type="checkbox"
@@ -508,32 +543,32 @@ function CaseDialog({
             </div>
           </label>
           <label>
-            <FieldLabel>使用次数</FieldLabel>
+            <FieldLabel>娴ｈ法鏁ゅ▎鈩冩殶</FieldLabel>
             <Input type="number" value={value.usageCount} onChange={(e) => onChange({ ...value, usageCount: e.target.value })} />
           </label>
           <label>
-            <FieldLabel>收藏次数</FieldLabel>
+            <FieldLabel>閺€鎯版濞嗏剝鏆?/FieldLabel>
             <Input type="number" value={value.favoriteCount} onChange={(e) => onChange({ ...value, favoriteCount: e.target.value })} />
           </label>
           <label>
-            <FieldLabel>风格</FieldLabel>
+            <FieldLabel>妞嬪孩鐗?/FieldLabel>
             <Textarea value={value.styles} onChange={(e) => onChange({ ...value, styles: e.target.value })} className="min-h-20" />
           </label>
           <label>
-            <FieldLabel>场景</FieldLabel>
+            <FieldLabel>閸︾儤娅?/FieldLabel>
             <Textarea value={value.scenes} onChange={(e) => onChange({ ...value, scenes: e.target.value })} className="min-h-20" />
           </label>
           <label className="sm:col-span-2">
-            <FieldLabel>Prompt 摘要</FieldLabel>
+            <FieldLabel>Prompt 閹芥顩?/FieldLabel>
             <Input value={value.promptPreview} onChange={(e) => onChange({ ...value, promptPreview: e.target.value })} />
           </label>
           <label className="sm:col-span-2">
-            <FieldLabel>完整 Prompt</FieldLabel>
+            <FieldLabel>鐎瑰本鏆?Prompt</FieldLabel>
             <Textarea value={value.prompt} onChange={(e) => onChange({ ...value, prompt: e.target.value })} className="min-h-32" />
           </label>
         </div>
         <div className="space-y-3">
-          <div className="text-xs font-medium text-stone-500">预览</div>
+          <div className="text-xs font-medium text-stone-500">妫板嫯顫?/div>
           {value.image ? (
             <img
               src={value.image}
@@ -545,16 +580,15 @@ function CaseDialog({
             />
           ) : (
             <div className="flex h-40 items-center justify-center rounded-2xl border border-dashed border-stone-200 text-sm text-stone-400">
-              暂无图片
+              閺嗗倹妫ら崶鍓у
             </div>
           )}
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>取消</Button>
+          <Button variant="outline" onClick={onClose}>閸欐牗绉?/Button>
           <Button onClick={onSave} disabled={saving}>
             {saving ? <LoaderCircle className="size-4 animate-spin" /> : null}
-            保存
-          </Button>
+            娣囨繂鐡?          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -703,6 +737,7 @@ function ContentPageContent() {
   const [savingCategory, setSavingCategory] = useState(false);
   const [savingTemplate, setSavingTemplate] = useState(false);
   const [savingCase, setSavingCase] = useState(false);
+  const [uploadingCaseImage, setUploadingCaseImage] = useState(false);
   const [deletingCategory, setDeletingCategory] = useState<string | null>(null);
   const [deletingTemplate, setDeletingTemplate] = useState<string | null>(null);
   const [deletingCase, setDeletingCase] = useState<number | null>(null);
@@ -727,7 +762,7 @@ function ContentPageContent() {
       setTemplates(templateData.items);
       setCases(caseData.items);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "加载内容数据失败");
+      toast.error(error instanceof Error ? error.message : "閸旂姾娴囬崘鍛啇閺佺増宓佹径杈Е");
     } finally {
       setIsLoading(false);
     }
@@ -775,15 +810,28 @@ function ContentPageContent() {
     setCaseDialogOpen(true);
   };
 
+  const uploadCaseImage = async (file: File) => {
+    setUploadingCaseImage(true);
+    try {
+      const response = await uploadContentImage(file);
+      setCaseForm((current) => ({ ...current, image: response.item.path }));
+      toast.success("閸ュ墽澧栧韫瑐娴?);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "娑撳﹣绱堕崶鍓у婢惰精瑙?);
+    } finally {
+      setUploadingCaseImage(false);
+    }
+  };
+
   const saveCategory = async () => {
     setSavingCategory(true);
     try {
       await saveContentCategory(buildCategoryPayload(categoryForm), editingCategoryValue || undefined);
-      toast.success("分类已保存");
+      toast.success("閸掑棛琚韫箽鐎?);
       setCategoryDialogOpen(false);
       await loadAll();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "保存分类失败");
+      toast.error(error instanceof Error ? error.message : "娣囨繂鐡ㄩ崚鍡欒婢惰精瑙?);
     } finally {
       setSavingCategory(false);
     }
@@ -793,11 +841,11 @@ function ContentPageContent() {
     setSavingTemplate(true);
     try {
       await saveContentTemplate(buildTemplatePayload(templateForm), editingTemplateId || undefined);
-      toast.success("模板已保存");
+      toast.success("濡剝婢樺韫箽鐎?);
       setTemplateDialogOpen(false);
       await loadAll();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "保存模板失败");
+      toast.error(error instanceof Error ? error.message : "娣囨繂鐡ㄥΟ鈩冩緲婢惰精瑙?);
     } finally {
       setSavingTemplate(false);
     }
@@ -807,62 +855,62 @@ function ContentPageContent() {
     setSavingCase(true);
     try {
       await saveContentCase(buildCasePayload(caseForm), editingCaseId || undefined);
-      toast.success("案例已保存");
+      toast.success("濡楀牅绶ュ韫箽鐎?);
       setCaseDialogOpen(false);
       await loadAll();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "保存案例失败");
+      toast.error(error instanceof Error ? error.message : "娣囨繂鐡ㄥ鍫滅伐婢惰精瑙?);
     } finally {
       setSavingCase(false);
     }
   };
 
   const removeCategory = async (value: string) => {
-    if (!confirm(`删除分类 ${value}？`)) return;
+    if (!confirm(`閸掔娀娅庨崚鍡欒 ${value}閿涚剫)) return;
     setDeletingCategory(value);
     try {
       await deleteContentCategory(value);
-      toast.success("分类已删除");
+      toast.success("閸掑棛琚鎻掑灩闂?);
       await loadAll();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "删除分类失败");
+      toast.error(error instanceof Error ? error.message : "閸掔娀娅庨崚鍡欒婢惰精瑙?);
     } finally {
       setDeletingCategory(null);
     }
   };
 
   const removeTemplate = async (id: string) => {
-    if (!confirm(`删除模板 ${id}？`)) return;
+    if (!confirm(`閸掔娀娅庡Ο鈩冩緲 ${id}閿涚剫)) return;
     setDeletingTemplate(id);
     try {
       await deleteContentTemplate(id);
-      toast.success("模板已删除");
+      toast.success("濡剝婢樺鎻掑灩闂?);
       await loadAll();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "删除模板失败");
+      toast.error(error instanceof Error ? error.message : "閸掔娀娅庡Ο鈩冩緲婢惰精瑙?);
     } finally {
       setDeletingTemplate(null);
     }
   };
 
   const removeCase = async (id: number) => {
-    if (!confirm(`删除案例 ${id}？`)) return;
+    if (!confirm(`閸掔娀娅庡鍫滅伐 ${id}閿涚剫)) return;
     setDeletingCase(id);
     try {
       await deleteContentCase(id);
-      toast.success("案例已删除");
+      toast.success("濡楀牅绶ュ鎻掑灩闂?);
       await loadAll();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "删除案例失败");
+      toast.error(error instanceof Error ? error.message : "閸掔娀娅庡鍫滅伐婢惰精瑙?);
     } finally {
       setDeletingCase(null);
     }
   };
 
   const tabs: Array<{ key: TabKey; label: string; count: number }> = [
-    { key: "cases", label: "案例", count: cases.length },
-    { key: "templates", label: "模板", count: templates.length },
-    { key: "categories", label: "分类", count: categories.length },
+    { key: "cases", label: "濡楀牅绶?, count: cases.length },
+    { key: "templates", label: "濡剝婢?, count: templates.length },
+    { key: "categories", label: "閸掑棛琚?, count: categories.length },
   ];
 
   if (isLoading && !overview) {
@@ -878,24 +926,23 @@ function ContentPageContent() {
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div className="space-y-1">
           <div className="text-xs font-semibold uppercase tracking-[0.18em] text-stone-500">Content Library</div>
-          <h1 className="text-2xl font-semibold tracking-tight text-stone-950">内容管理</h1>
-          <div className="text-sm text-stone-500">分类、模板、案例统一管理，并同步提供外部 API。</div>
+          <h1 className="text-2xl font-semibold tracking-tight text-stone-950">閸愬懎顔愮粻锛勬倞</h1>
+          <div className="text-sm text-stone-500">閸掑棛琚妴浣鼓侀弶瑁も偓浣诡攳娓氬绮烘稉鈧粻锛勬倞閿涘苯鑻熼崥灞绢劄閹绘劒绶垫径鏍劥 API閵?/div>
         </div>
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" onClick={() => void loadAll()}>
             {isLoading ? <LoaderCircle className="size-4 animate-spin" /> : <Search className="size-4" />}
-            刷新
-          </Button>
-          <Button onClick={openNewCase}><CirclePlus className="size-4" />新增案例</Button>
+            閸掗攱鏌?          </Button>
+          <Button onClick={openNewCase}><CirclePlus className="size-4" />閺傛澘顤冨鍫滅伐</Button>
         </div>
       </div>
 
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
-        <OverviewCard label="分类" value={overview?.categories ?? 0} icon={<Layers3 className="size-5" />} />
-        <OverviewCard label="模板" value={overview?.templates ?? 0} icon={<FileText className="size-5" />} />
-        <OverviewCard label="案例" value={overview?.cases ?? 0} icon={<ImageIcon className="size-5" />} />
-        <OverviewCard label="已发布" value={overview?.publishedCases ?? 0} icon={<Sparkles className="size-5" />} />
-        <OverviewCard label="标签" value={overview?.styleTags ?? 0} icon={<Tag className="size-5" />} />
+        <OverviewCard label="閸掑棛琚? value={overview?.categories ?? 0} icon={<Layers3 className="size-5" />} />
+        <OverviewCard label="濡剝婢? value={overview?.templates ?? 0} icon={<FileText className="size-5" />} />
+        <OverviewCard label="濡楀牅绶? value={overview?.cases ?? 0} icon={<ImageIcon className="size-5" />} />
+        <OverviewCard label="瀹告彃褰傜敮? value={overview?.publishedCases ?? 0} icon={<Sparkles className="size-5" />} />
+        <OverviewCard label="閺嶅洨顒? value={overview?.styleTags ?? 0} icon={<Tag className="size-5" />} />
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
@@ -920,9 +967,9 @@ function ContentPageContent() {
       {activeTab === "categories" ? (
         <Card className="rounded-2xl border-white/80 bg-white/90 shadow-sm">
           <SectionHeader
-            title="分类"
-            description="管理分类的唯一值、标题、描述和导航锚点。"
-            action={<Button onClick={openNewCategory}><Plus className="size-4" />新增分类</Button>}
+            title="閸掑棛琚?
+            description="缁狅紕鎮婇崚鍡欒閻ㄥ嫬鏁稉鈧崐绗衡偓浣圭垼妫版ǜ鈧焦寮挎潻鏉挎嫲鐎佃壈鍩呴柨姘卞仯閵?
+            action={<Button onClick={openNewCategory}><Plus className="size-4" />閺傛澘顤冮崚鍡欒</Button>}
           />
           <CardContent className="p-0">
             <div className="overflow-x-auto">
@@ -930,12 +977,12 @@ function ContentPageContent() {
                 <thead className="bg-stone-50 text-left text-xs uppercase tracking-wide text-stone-500">
                   <tr>
                     <th className="px-5 py-3">Value</th>
-                    <th className="px-5 py-3">标题</th>
-                    <th className="px-5 py-3">描述</th>
+                    <th className="px-5 py-3">閺嶅洭顣?/th>
+                    <th className="px-5 py-3">閹诲繗鍫?/th>
                     <th className="px-5 py-3">Anchor</th>
-                    <th className="px-5 py-3">模板锚点</th>
-                    <th className="px-5 py-3">排序</th>
-                    <th className="px-5 py-3">操作</th>
+                    <th className="px-5 py-3">濡剝婢橀柨姘卞仯</th>
+                    <th className="px-5 py-3">閹烘帒绨?/th>
+                    <th className="px-5 py-3">閹垮秳缍?/th>
                   </tr>
                 </thead>
                 <tbody>
@@ -949,7 +996,7 @@ function ContentPageContent() {
                       <td className="px-5 py-4 text-stone-500">{item.sortOrder}</td>
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-2">
-                          <Button variant="outline" size="sm" onClick={() => openEditCategory(item)}><Pencil className="size-4" />编辑</Button>
+                          <Button variant="outline" size="sm" onClick={() => openEditCategory(item)}><Pencil className="size-4" />缂傛牞绶?/Button>
                           <Button
                             variant="outline"
                             size="sm"
@@ -958,8 +1005,7 @@ function ContentPageContent() {
                             disabled={deletingCategory === item.value}
                           >
                             {deletingCategory === item.value ? <LoaderCircle className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
-                            删除
-                          </Button>
+                            閸掔娀娅?                          </Button>
                         </div>
                       </td>
                     </tr>
@@ -974,25 +1020,24 @@ function ContentPageContent() {
       {activeTab === "templates" ? (
         <Card className="rounded-2xl border-white/80 bg-white/90 shadow-sm">
           <SectionHeader
-            title="模板"
-            description="支持搜索、按分类筛选，以及编辑提示词、标签和案例引用。"
-            action={<Button onClick={openNewTemplate}><Plus className="size-4" />新增模板</Button>}
+            title="濡剝婢?
+            description="閺€顖涘瘮閹兼粎鍌ㄩ妴浣瑰瘻閸掑棛琚粵娑⑩偓澶涚礉娴犮儱寮风紓鏍帆閹绘劗銇氱拠宥冣偓浣圭垼缁涙儳鎷板鍫滅伐瀵洜鏁ら妴?
+            action={<Button onClick={openNewTemplate}><Plus className="size-4" />閺傛澘顤冨Ο鈩冩緲</Button>}
           />
           <div className="flex flex-wrap gap-2 border-b border-stone-100 px-5 py-4">
             <div className="flex min-w-72 flex-1 items-center gap-2 rounded-2xl border border-stone-200 bg-white px-3">
               <Search className="size-4 text-stone-400" />
-              <Input value={templateSearch} onChange={(e) => setTemplateSearch(e.target.value)} placeholder="搜索模板 ID、标题、说明" className="border-0 px-0 shadow-none focus-visible:ring-0" />
+              <Input value={templateSearch} onChange={(e) => setTemplateSearch(e.target.value)} placeholder="閹兼粎鍌ㄥΟ鈩冩緲 ID閵嗕焦鐖ｆ０妯糕偓浣筋嚛閺? className="border-0 px-0 shadow-none focus-visible:ring-0" />
             </div>
             <Select value={templateCategoryFilter || "__all__"} onValueChange={(next) => setTemplateCategoryFilter(next === "__all__" ? "" : next)}>
-              <SelectTrigger className="w-56"><SelectValue placeholder="全部分类" /></SelectTrigger>
+              <SelectTrigger className="w-56"><SelectValue placeholder="閸忋劑鍎撮崚鍡欒" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="__all__">全部分类</SelectItem>
+                <SelectItem value="__all__">閸忋劑鍎撮崚鍡欒</SelectItem>
                 {categoryOptions.map((item) => <SelectItem key={item} value={item}>{item}</SelectItem>)}
               </SelectContent>
             </Select>
             <Button variant="outline" onClick={() => { setTemplateSearch(""); setTemplateCategoryFilter(""); }}>
-              <Filter className="size-4" />清空
-            </Button>
+              <Filter className="size-4" />濞撳懐鈹?            </Button>
           </div>
           <CardContent className="p-0">
             <div className="overflow-x-auto">
@@ -1000,12 +1045,12 @@ function ContentPageContent() {
                 <thead className="bg-stone-50 text-left text-xs uppercase tracking-wide text-stone-500">
                   <tr>
                     <th className="px-5 py-3">ID</th>
-                    <th className="px-5 py-3">标题</th>
-                    <th className="px-5 py-3">分类</th>
-                    <th className="px-5 py-3">标签</th>
-                    <th className="px-5 py-3">案例</th>
-                    <th className="px-5 py-3">排序</th>
-                    <th className="px-5 py-3">操作</th>
+                    <th className="px-5 py-3">閺嶅洭顣?/th>
+                    <th className="px-5 py-3">閸掑棛琚?/th>
+                    <th className="px-5 py-3">閺嶅洨顒?/th>
+                    <th className="px-5 py-3">濡楀牅绶?/th>
+                    <th className="px-5 py-3">閹烘帒绨?/th>
+                    <th className="px-5 py-3">閹垮秳缍?/th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1028,7 +1073,7 @@ function ContentPageContent() {
                       <td className="px-5 py-4 text-stone-500">{item.sortOrder}</td>
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-2">
-                          <Button variant="outline" size="sm" onClick={() => openEditTemplate(item)}><Pencil className="size-4" />编辑</Button>
+                          <Button variant="outline" size="sm" onClick={() => openEditTemplate(item)}><Pencil className="size-4" />缂傛牞绶?/Button>
                           <Button
                             variant="outline"
                             size="sm"
@@ -1037,8 +1082,7 @@ function ContentPageContent() {
                             disabled={deletingTemplate === item.id}
                           >
                             {deletingTemplate === item.id ? <LoaderCircle className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
-                            删除
-                          </Button>
+                            閸掔娀娅?                          </Button>
                         </div>
                       </td>
                     </tr>
@@ -1053,47 +1097,46 @@ function ContentPageContent() {
       {activeTab === "cases" ? (
         <Card className="rounded-2xl border-white/80 bg-white/90 shadow-sm">
           <SectionHeader
-            title="案例"
-            description="支持按分类、状态和关键字搜索，并可直接编辑图片、Prompt、热度与收藏数。"
-            action={<Button onClick={openNewCase}><Plus className="size-4" />新增案例</Button>}
+            title="濡楀牅绶?
+            description="閺€顖涘瘮閹稿鍨庣猾姹団偓浣哄Ц閹礁鎷伴崗鎶芥暛鐎涙鎮崇槐顫礉楠炶泛褰查惄瀛樺复缂傛牞绶崶鍓у閵嗕赋rompt閵嗕胶鍎规惔锔跨瑢閺€鎯版閺佽埇鈧?
+            action={<Button onClick={openNewCase}><Plus className="size-4" />閺傛澘顤冨鍫滅伐</Button>}
           />
           <div className="grid gap-3 border-b border-stone-100 px-5 py-4 lg:grid-cols-4">
             <div className="flex items-center gap-2 rounded-2xl border border-stone-200 bg-white px-3">
               <Search className="size-4 text-stone-400" />
-              <Input value={caseSearch} onChange={(e) => setCaseSearch(e.target.value)} placeholder="搜索标题、Prompt、来源" className="border-0 px-0 shadow-none focus-visible:ring-0" />
+              <Input value={caseSearch} onChange={(e) => setCaseSearch(e.target.value)} placeholder="閹兼粎鍌ㄩ弽鍥暯閵嗕赋rompt閵嗕焦娼靛┃? className="border-0 px-0 shadow-none focus-visible:ring-0" />
             </div>
             <Select value={caseCategoryFilter || "__all__"} onValueChange={(next) => setCaseCategoryFilter(next === "__all__" ? "" : next)}>
-              <SelectTrigger><SelectValue placeholder="全部分类" /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder="閸忋劑鍎撮崚鍡欒" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="__all__">全部分类</SelectItem>
+                <SelectItem value="__all__">閸忋劑鍎撮崚鍡欒</SelectItem>
                 {categoryOptions.map((item) => <SelectItem key={item} value={item}>{item}</SelectItem>)}
               </SelectContent>
             </Select>
             <Select value={caseStatusFilter || "__all__"} onValueChange={(next) => setCaseStatusFilter(next === "__all__" ? "" : next)}>
-              <SelectTrigger><SelectValue placeholder="全部状态" /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder="閸忋劑鍎撮悩鑸碘偓? /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="__all__">全部状态</SelectItem>
+                <SelectItem value="__all__">閸忋劑鍎撮悩鑸碘偓?/SelectItem>
                 <SelectItem value="published">published</SelectItem>
                 <SelectItem value="draft">draft</SelectItem>
                 <SelectItem value="archived">archived</SelectItem>
               </SelectContent>
             </Select>
             <Button variant="outline" onClick={() => { setCaseSearch(""); setCaseCategoryFilter(""); setCaseStatusFilter(""); }}>
-              <Filter className="size-4" />清空
-            </Button>
+              <Filter className="size-4" />濞撳懐鈹?            </Button>
           </div>
           <CardContent className="p-0">
             <div className="overflow-x-auto">
               <table className="w-full min-w-[1280px] text-sm">
                 <thead className="bg-stone-50 text-left text-xs uppercase tracking-wide text-stone-500">
                   <tr>
-                    <th className="px-5 py-3">预览</th>
-                    <th className="px-5 py-3">标题</th>
-                    <th className="px-5 py-3">分类</th>
-                    <th className="px-5 py-3">状态</th>
-                    <th className="px-5 py-3">指标</th>
-                    <th className="px-5 py-3">标签</th>
-                    <th className="px-5 py-3">操作</th>
+                    <th className="px-5 py-3">妫板嫯顫?/th>
+                    <th className="px-5 py-3">閺嶅洭顣?/th>
+                    <th className="px-5 py-3">閸掑棛琚?/th>
+                    <th className="px-5 py-3">閻樿埖鈧?/th>
+                    <th className="px-5 py-3">閹稿洦鐖?/th>
+                    <th className="px-5 py-3">閺嶅洨顒?/th>
+                    <th className="px-5 py-3">閹垮秳缍?/th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1105,12 +1148,12 @@ function ContentPageContent() {
                       <td className="px-5 py-4">
                         <div className="font-medium text-stone-900">{item.title}</div>
                         <div className="mt-1 line-clamp-3 max-w-[28rem] text-xs text-stone-500">{item.promptPreview || item.prompt}</div>
-                        <div className="mt-2 text-xs text-stone-400">{item.sourceLabel || "-"} · {item.sourceUrl || "-"}</div>
+                        <div className="mt-2 text-xs text-stone-400">{item.sourceLabel || "-"} 璺?{item.sourceUrl || "-"}</div>
                       </td>
                       <td className="px-5 py-4 text-stone-500">{item.category || "-"}</td>
                       <td className="px-5 py-4">
                         <Badge variant={item.status === "published" ? "success" : item.status === "draft" ? "warning" : "outline"}>{item.status}</Badge>
-                        {item.featured ? <Badge variant="violet" className="ml-2">推荐</Badge> : null}
+                        {item.featured ? <Badge variant="violet" className="ml-2">閹恒劏宕?/Badge> : null}
                       </td>
                       <td className="px-5 py-4 text-stone-500">
                         <div className="flex items-center gap-2"><Star className="size-4" />{item.favoriteCount}</div>
@@ -1125,7 +1168,7 @@ function ContentPageContent() {
                       </td>
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-2">
-                          <Button variant="outline" size="sm" onClick={() => openEditCase(item)}><Pencil className="size-4" />编辑</Button>
+                          <Button variant="outline" size="sm" onClick={() => openEditCase(item)}><Pencil className="size-4" />缂傛牞绶?/Button>
                           <Button
                             variant="outline"
                             size="sm"
@@ -1134,8 +1177,7 @@ function ContentPageContent() {
                             disabled={deletingCase === item.id}
                           >
                             {deletingCase === item.id ? <LoaderCircle className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
-                            删除
-                          </Button>
+                            閸掔娀娅?                          </Button>
                         </div>
                       </td>
                     </tr>
@@ -1175,6 +1217,8 @@ function ContentPageContent() {
         onClose={() => setCaseDialogOpen(false)}
         onSave={() => void saveCase()}
         saving={savingCase}
+        onUploadImage={(file) => void uploadCaseImage(file)}
+        uploadingImage={uploadingCaseImage}
         originalId={editingCaseId}
         categories={categories}
       />
