@@ -6,6 +6,8 @@ import {
   CirclePlus,
   FileText,
   Filter,
+  ImageIcon,
+  Layers3,
   LoaderCircle,
   Pencil,
   Plus,
@@ -14,15 +16,11 @@ import {
   Star,
   Tag,
   Trash2,
-  Layers3,
-  ImageIcon,
   Upload,
 } from "lucide-react";
 import { toast } from "sonner";
 
-import {
-  Badge,
-} from "@/components/ui/badge";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -49,7 +47,7 @@ import {
 import { useAuthGuard } from "@/lib/use-auth-guard";
 import { cn } from "@/lib/utils";
 
-type TabKey = "categories" | "templates" | "cases";
+type TabKey = "cases" | "templates" | "categories";
 
 type CategoryForm = {
   value: string;
@@ -169,7 +167,7 @@ function splitList(value: string) {
 function splitNumbers(value: string) {
   return splitList(value)
     .map((item) => Number(item))
-    .filter((value) => Number.isFinite(value));
+    .filter((item) => Number.isFinite(item));
 }
 
 function localized(zh: string, en: string) {
@@ -177,16 +175,13 @@ function localized(zh: string, en: string) {
 }
 
 function displayText(value: unknown) {
-  if (!value || typeof value !== "object") {
-    return "";
-  }
+  if (!value || typeof value !== "object") return "";
   const item = value as { zh?: string; en?: string };
   return item.zh?.trim() || item.en?.trim() || "";
 }
 
-function formatDate(value?: string | null) {
-  if (!value) return "-";
-  return value.replace("T", " ").replace("Z", "");
+function toMultiline(value: unknown) {
+  return Array.isArray(value) ? value.join("\n") : String(value || "");
 }
 
 function OverviewCard({ label, value, icon }: { label: string; value: number; icon: ReactNode }) {
@@ -207,15 +202,7 @@ function FieldLabel({ children }: { children: ReactNode }) {
   return <div className="mb-1 text-xs font-medium text-stone-500">{children}</div>;
 }
 
-function SectionHeader({
-  title,
-  description,
-  action,
-}: {
-  title: string;
-  description: string;
-  action?: ReactNode;
-}) {
+function SectionHeader({ title, description, action }: { title: string; description: string; action?: ReactNode }) {
   return (
     <div className="flex flex-col gap-3 border-b border-stone-100 px-5 py-4 sm:flex-row sm:items-end sm:justify-between">
       <div>
@@ -248,51 +235,49 @@ function CategoryDialog({
     <Dialog open={open} onOpenChange={(next) => (!next ? onClose() : null)}>
       <DialogContent className="max-h-[90vh] overflow-y-auto rounded-2xl">
         <DialogHeader>
-          <DialogTitle>{originalValue ? "缂傛牞绶崚鍡欒" : "閺傛澘顤冮崚鍡欒"}</DialogTitle>
+          <DialogTitle>{originalValue ? "编辑分类" : "新增分类"}</DialogTitle>
         </DialogHeader>
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="sm:col-span-2">
-            <FieldLabel>闂傚倷绀侀幗婊堝磿閹版澘鍨傛い鏍ㄧ矌閸楁岸鏌熺紒銏犳灈缁?</FieldLabel>
-            <Input value={value.value} onChange={(e) => onChange({ ...value, value: e.target.value })} placeholder="Posters & Typography" />
+            <FieldLabel>唯一值</FieldLabel>
+            <Input value={value.value} onChange={(event) => onChange({ ...value, value: event.target.value })} placeholder="Posters & Typography" />
           </label>
           <label>
-            <FieldLabel>婵犵數鍋為崹鍫曞箹閳哄懎鍌ㄥù鐘差儏閸戠娀鏌涢幇闈涙灈闁告劏鍋撻梻浣规偠閸庢椽宕滈敃鍌氭辈?</FieldLabel>
-            <Input value={value.zhTitle} onChange={(e) => onChange({ ...value, zhTitle: e.target.value })} />
+            <FieldLabel>中文标题</FieldLabel>
+            <Input value={value.zhTitle} onChange={(event) => onChange({ ...value, zhTitle: event.target.value })} />
           </label>
           <label>
-            <FieldLabel>闂傚倷绀侀崥瀣ｉ幒鎾变粓闁归棿绀侀崙鐘绘煕閹伴潧鏋涢柛鎰ㄥ亾闂備焦鎮堕崕娲礈閿曞倸姹?</FieldLabel>
-            <Input value={value.enTitle} onChange={(e) => onChange({ ...value, enTitle: e.target.value })} />
+            <FieldLabel>英文标题</FieldLabel>
+            <Input value={value.enTitle} onChange={(event) => onChange({ ...value, enTitle: event.target.value })} />
           </label>
           <label>
-            <FieldLabel>婵犵數鍋為崹鍫曞箹閳哄懎鍌ㄥù鐘差儏閸戠娀鏌涢幇闈涙灈缂佺姷鏁婚悡顐﹀炊閵娿劌顥濋梺?</FieldLabel>
-            <Textarea value={value.zhDescription} onChange={(e) => onChange({ ...value, zhDescription: e.target.value })} className="min-h-24" />
+            <FieldLabel>中文描述</FieldLabel>
+            <Textarea value={value.zhDescription} onChange={(event) => onChange({ ...value, zhDescription: event.target.value })} className="min-h-24" />
           </label>
           <label>
-            <FieldLabel>闂傚倷绀侀崥瀣ｉ幒鎾变粓闁归棿绀侀崙鐘绘煕閹伴潧鏋涚紒鐘垫暬閻擃偊宕堕妸銊ヮ棟闂?</FieldLabel>
-            <Textarea value={value.enDescription} onChange={(e) => onChange({ ...value, enDescription: e.target.value })} className="min-h-24" />
+            <FieldLabel>英文描述</FieldLabel>
+            <Textarea value={value.enDescription} onChange={(event) => onChange({ ...value, enDescription: event.target.value })} className="min-h-24" />
           </label>
           <label>
-            <FieldLabel>闂備浇顕х换鎰崲鐎ｎ剚顐芥慨姗嗗墻閻?</FieldLabel>
-            <Input value={value.cover} onChange={(e) => onChange({ ...value, cover: e.target.value })} placeholder="/images/category-covers/poster.jpg" />
+            <FieldLabel>封面</FieldLabel>
+            <Input value={value.cover} onChange={(event) => onChange({ ...value, cover: event.target.value })} placeholder="/images/category-covers/poster.jpg" />
           </label>
           <label>
-            <FieldLabel>闂傚倸鍊烽悞锔锯偓绗涘喚娼╅柕濞炬櫅绾?</FieldLabel>
-            <Input value={value.anchor} onChange={(e) => onChange({ ...value, anchor: e.target.value })} />
+            <FieldLabel>锚点</FieldLabel>
+            <Input value={value.anchor} onChange={(event) => onChange({ ...value, anchor: event.target.value })} />
           </label>
           <label>
-            <FieldLabel>濠电姷顣藉Σ鍛村垂椤忓牆绀堟繝闈涙－閻斿棙鎱ㄥ璇蹭壕闂佸搫琚崝宀勶綖濠靛纭€闁绘劖婢樼€?</FieldLabel>
-            <Input value={value.templateAnchor} onChange={(e) => onChange({ ...value, templateAnchor: e.target.value })} />
+            <FieldLabel>模板锚点</FieldLabel>
+            <Input value={value.templateAnchor} onChange={(event) => onChange({ ...value, templateAnchor: event.target.value })} />
           </label>
           <label>
-            <FieldLabel>闂傚倷绀佸﹢閬嶅磿閵堝洦鏆滈柟鐑樻婵?</FieldLabel>
-            <Input type="number" value={value.sortOrder} onChange={(e) => onChange({ ...value, sortOrder: e.target.value })} />
+            <FieldLabel>排序</FieldLabel>
+            <Input type="number" value={value.sortOrder} onChange={(event) => onChange({ ...value, sortOrder: event.target.value })} />
           </label>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>闂傚倷绀侀幉锟犳偡閿曞倹鍋嬫俊銈呭暟閻?</Button>
-          <Button onClick={onSave} disabled={saving}>
-            {saving ? <LoaderCircle className="size-4 animate-spin" /> : null}
-            婵犵數鍎戠徊钘壝洪敂鐐床闁稿瞼鍋為崑?          </Button>
+          <Button variant="outline" onClick={onClose}>取消</Button>
+          <Button onClick={onSave} disabled={saving}>{saving ? <LoaderCircle className="size-4 animate-spin" /> : null}保存</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -322,100 +307,96 @@ function TemplateDialog({
     <Dialog open={open} onOpenChange={(next) => (!next ? onClose() : null)}>
       <DialogContent className="max-h-[90vh] overflow-y-auto rounded-2xl">
         <DialogHeader>
-          <DialogTitle>{originalId ? "缂傛牞绶Ο鈩冩緲" : "閺傛澘顤冨Ο鈩冩緲"}</DialogTitle>
+          <DialogTitle>{originalId ? "编辑模板" : "新增模板"}</DialogTitle>
         </DialogHeader>
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="sm:col-span-2">
             <FieldLabel>ID</FieldLabel>
-            <Input value={value.id} onChange={(e) => onChange({ ...value, id: e.target.value })} placeholder="tpl-poster" />
+            <Input value={value.id} onChange={(event) => onChange({ ...value, id: event.target.value })} placeholder="tpl-poster" />
           </label>
           <label>
-            <FieldLabel>婵犵數鍋為崹鍫曞箹閳哄懎鍌ㄥù鐘差儏閸戠娀鏌涢幇闈涙灈闁告劏鍋撻梻浣规偠閸庢椽宕滈敃鍌氭辈?</FieldLabel>
-            <Input value={value.zhTitle} onChange={(e) => onChange({ ...value, zhTitle: e.target.value })} />
+            <FieldLabel>中文标题</FieldLabel>
+            <Input value={value.zhTitle} onChange={(event) => onChange({ ...value, zhTitle: event.target.value })} />
           </label>
           <label>
-            <FieldLabel>闂傚倷绀侀崥瀣ｉ幒鎾变粓闁归棿绀侀崙鐘绘煕閹伴潧鏋涢柛鎰ㄥ亾闂備焦鎮堕崕娲礈閿曞倸姹?</FieldLabel>
-            <Input value={value.enTitle} onChange={(e) => onChange({ ...value, enTitle: e.target.value })} />
+            <FieldLabel>英文标题</FieldLabel>
+            <Input value={value.enTitle} onChange={(event) => onChange({ ...value, enTitle: event.target.value })} />
           </label>
           <label>
-            <FieldLabel>婵犵數鍋為崹鍫曞箹閳哄懎鍌ㄥù鐘差儏閸戠娀鏌涢幇闈涙灈缂佺姷鏁婚悡顐﹀炊閵娿劌顥濋梺?</FieldLabel>
-            <Textarea value={value.zhDescription} onChange={(e) => onChange({ ...value, zhDescription: e.target.value })} className="min-h-24" />
+            <FieldLabel>中文描述</FieldLabel>
+            <Textarea value={value.zhDescription} onChange={(event) => onChange({ ...value, zhDescription: event.target.value })} className="min-h-24" />
           </label>
           <label>
-            <FieldLabel>闂傚倷绀侀崥瀣ｉ幒鎾变粓闁归棿绀侀崙鐘绘煕閹伴潧鏋涚紒鐘垫暬閻擃偊宕堕妸銊ヮ棟闂?</FieldLabel>
-            <Textarea value={value.enDescription} onChange={(e) => onChange({ ...value, enDescription: e.target.value })} className="min-h-24" />
+            <FieldLabel>英文描述</FieldLabel>
+            <Textarea value={value.enDescription} onChange={(event) => onChange({ ...value, enDescription: event.target.value })} className="min-h-24" />
           </label>
           <label>
-            <FieldLabel>闂傚倷绀侀幉锛勬暜閹烘嚦娑樷槈濮橆厼浠?</FieldLabel>
+            <FieldLabel>分类</FieldLabel>
             <Select value={value.category} onValueChange={(next) => onChange({ ...value, category: next })}>
-              <SelectTrigger><SelectValue placeholder="闂傚倸鍊风欢锟犲磻閸曨垁鍥箥椤旂懓浜炬慨妯稿劚婵倻鈧娲樺畝绋跨暦閸楃偐鏋庨柟鐑樼箖閽? /></SelectTrigger>
-              <SelectContent>
-                {categories.map((item) => <SelectItem key={item.value} value={item.value}>{item.value}</SelectItem>)}
-              </SelectContent>
+              <SelectTrigger><SelectValue placeholder="选择分类" /></SelectTrigger>
+              <SelectContent>{categories.map((item) => <SelectItem key={item.value} value={item.value}>{item.value}</SelectItem>)}</SelectContent>
             </Select>
           </label>
           <label>
-            <FieldLabel>闂傚倸鍊烽悞锔锯偓绗涘喚娼╅柕濞炬櫅绾?</FieldLabel>
-            <Input value={value.anchor} onChange={(e) => onChange({ ...value, anchor: e.target.value })} />
+            <FieldLabel>锚点</FieldLabel>
+            <Input value={value.anchor} onChange={(event) => onChange({ ...value, anchor: event.target.value })} />
           </label>
           <label>
-            <FieldLabel>闂備浇顕х换鎰崲鐎ｎ剚顐芥慨姗嗗墻閻?</FieldLabel>
-            <Input value={value.cover} onChange={(e) => onChange({ ...value, cover: e.target.value })} />
+            <FieldLabel>封面</FieldLabel>
+            <Input value={value.cover} onChange={(event) => onChange({ ...value, cover: event.target.value })} />
           </label>
           <label>
-            <FieldLabel>闂傚倷绀佸﹢閬嶅磿閵堝洦鏆滈柟鐑樻婵?</FieldLabel>
-            <Input type="number" value={value.sortOrder} onChange={(e) => onChange({ ...value, sortOrder: e.target.value })} />
+            <FieldLabel>排序</FieldLabel>
+            <Input type="number" value={value.sortOrder} onChange={(event) => onChange({ ...value, sortOrder: event.target.value })} />
           </label>
           <label>
-            <FieldLabel>婵犵绱曢崑娑㈩敄閸涱垪鍋撳☉鎺撴珚闁?</FieldLabel>
-            <Textarea value={value.styles} onChange={(e) => onChange({ ...value, styles: e.target.value })} className="min-h-20" placeholder="Poster, Typography" />
+            <FieldLabel>风格</FieldLabel>
+            <Textarea value={value.styles} onChange={(event) => onChange({ ...value, styles: event.target.value })} className="min-h-20" placeholder="Poster, Typography" />
           </label>
           <label>
-            <FieldLabel>闂傚倷绶氬缁樹繆閸ヮ剙纾块柕鍫濇噳閺?</FieldLabel>
-            <Textarea value={value.scenes} onChange={(e) => onChange({ ...value, scenes: e.target.value })} className="min-h-20" placeholder="Commerce, Social" />
+            <FieldLabel>场景</FieldLabel>
+            <Textarea value={value.scenes} onChange={(event) => onChange({ ...value, scenes: event.target.value })} className="min-h-20" placeholder="Commerce, Social" />
           </label>
           <label>
-            <FieldLabel>闂傚倷绀侀幖顐ょ矓閺夋嚚娲Ω閳哄﹥鏅?</FieldLabel>
-            <Textarea value={value.tags} onChange={(e) => onChange({ ...value, tags: e.target.value })} className="min-h-20" />
+            <FieldLabel>标签</FieldLabel>
+            <Textarea value={value.tags} onChange={(event) => onChange({ ...value, tags: event.target.value })} className="min-h-20" />
           </label>
           <label>
-            <FieldLabel>缂傚倸鍊风拋鏌ュ磻閹捐绾ч柣鎰綑椤ュ霉閸忕厧濮堝ǎ鍥э工铻栭柍褜鍓熼幃褔宕ㄩ娑卞仺?</FieldLabel>
-            <Textarea value={value.exampleCases} onChange={(e) => onChange({ ...value, exampleCases: e.target.value })} className="min-h-20" placeholder="1, 2, 3" />
+            <FieldLabel>示例案例</FieldLabel>
+            <Textarea value={value.exampleCases} onChange={(event) => onChange({ ...value, exampleCases: event.target.value })} className="min-h-20" placeholder="1, 2, 3" />
           </label>
           <label>
-            <FieldLabel>婵犵數鍋為崹鍫曞箹閳哄懎鍌ㄥù鐘差儏閸戠娀鏌涢幇闈涙灍闁绘帒顭烽弻娑氫沪閸撗呯厑闂佸搫妫楃换姗€寮诲☉銏℃櫆闁诡垎鍐瀱婵?</FieldLabel>
-            <Textarea value={value.zhUseWhen} onChange={(e) => onChange({ ...value, zhUseWhen: e.target.value })} className="min-h-24" />
+            <FieldLabel>中文适用场景</FieldLabel>
+            <Textarea value={value.zhUseWhen} onChange={(event) => onChange({ ...value, zhUseWhen: event.target.value })} className="min-h-24" />
           </label>
           <label>
-            <FieldLabel>闂傚倷绀侀崥瀣ｉ幒鎾变粓闁归棿绀侀崙鐘绘煕閹伴潧鏋熼柣鎺戭煼閺屾稓浠﹂崜褏鐓侀梺鍝勬缁绘﹢寮诲☉銏℃櫆闁诡垎鍐瀱婵?</FieldLabel>
-            <Textarea value={value.enUseWhen} onChange={(e) => onChange({ ...value, enUseWhen: e.target.value })} className="min-h-24" />
+            <FieldLabel>英文适用场景</FieldLabel>
+            <Textarea value={value.enUseWhen} onChange={(event) => onChange({ ...value, enUseWhen: event.target.value })} className="min-h-24" />
           </label>
           <label>
-            <FieldLabel>婵犵數鍋為崹鍫曞箹閳哄懎鍌ㄥù鐘差儏閸戠娀鏌涢幇鐢靛帥闁搞倕鐗嗚灃闁挎梻鐡旈崕銉╂煕?</FieldLabel>
-            <Textarea value={value.guidanceZh} onChange={(e) => onChange({ ...value, guidanceZh: e.target.value })} className="min-h-24" />
+            <FieldLabel>中文建议</FieldLabel>
+            <Textarea value={value.guidanceZh} onChange={(event) => onChange({ ...value, guidanceZh: event.target.value })} className="min-h-24" />
           </label>
           <label>
-            <FieldLabel>闂傚倷绀侀崥瀣ｉ幒鎾变粓闁归棿绀侀崙鐘绘煕閹扮數鍘涢柛銈呯墕铻栭柨鏃傜摂閸庛儵鏌?</FieldLabel>
-            <Textarea value={value.guidanceEn} onChange={(e) => onChange({ ...value, guidanceEn: e.target.value })} className="min-h-24" />
+            <FieldLabel>英文建议</FieldLabel>
+            <Textarea value={value.guidanceEn} onChange={(event) => onChange({ ...value, guidanceEn: event.target.value })} className="min-h-24" />
           </label>
           <label>
-            <FieldLabel>婵犵數鍋為崹鍫曞箹閳哄懎鍌ㄥù鐘差儏閸戠娀鏌涢幇闈涙灍闁绘帒銈搁弻娑⑩€﹂幋婵囩亶缂?</FieldLabel>
-            <Textarea value={value.pitfallsZh} onChange={(e) => onChange({ ...value, pitfallsZh: e.target.value })} className="min-h-24" />
+            <FieldLabel>中文避坑</FieldLabel>
+            <Textarea value={value.pitfallsZh} onChange={(event) => onChange({ ...value, pitfallsZh: event.target.value })} className="min-h-24" />
           </label>
           <label>
-            <FieldLabel>闂傚倷绀侀崥瀣ｉ幒鎾变粓闁归棿绀侀崙鐘绘煕閹伴潧鏋熼柣鎺戙偢閺屾盯鈥﹂幋婵囩亶缂?</FieldLabel>
-            <Textarea value={value.pitfallsEn} onChange={(e) => onChange({ ...value, pitfallsEn: e.target.value })} className="min-h-24" />
+            <FieldLabel>英文避坑</FieldLabel>
+            <Textarea value={value.pitfallsEn} onChange={(event) => onChange({ ...value, pitfallsEn: event.target.value })} className="min-h-24" />
           </label>
           <label className="sm:col-span-2">
             <FieldLabel>Prompt</FieldLabel>
-            <Textarea value={value.prompt} onChange={(e) => onChange({ ...value, prompt: e.target.value })} className="min-h-32" />
+            <Textarea value={value.prompt} onChange={(event) => onChange({ ...value, prompt: event.target.value })} className="min-h-32" />
           </label>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>闂傚倷绀侀幉锟犳偡閿曞倹鍋嬫俊銈呭暟閻?</Button>
-          <Button onClick={onSave} disabled={saving}>
-            {saving ? <LoaderCircle className="size-4 animate-spin" /> : null}
-            婵犵數鍎戠徊钘壝洪敂鐐床闁稿瞼鍋為崑?          </Button>
+          <Button variant="outline" onClick={onClose}>取消</Button>
+          <Button onClick={onSave} disabled={saving}>{saving ? <LoaderCircle className="size-4 animate-spin" /> : null}保存</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -451,15 +432,15 @@ function CaseDialog({
     <Dialog open={open} onOpenChange={(next) => (!next ? onClose() : null)}>
       <DialogContent className="max-h-[90vh] overflow-y-auto rounded-2xl">
         <DialogHeader>
-          <DialogTitle>{originalId ? "缂傛牞绶鍫滅伐" : "閺傛澘顤冨鍫滅伐"}</DialogTitle>
+          <DialogTitle>{originalId ? "编辑案例" : "新增案例"}</DialogTitle>
         </DialogHeader>
         <div className="grid gap-4 sm:grid-cols-2">
           <label>
             <FieldLabel>ID</FieldLabel>
-            <Input value={value.id} onChange={(e) => onChange({ ...value, id: e.target.value })} placeholder="484" />
+            <Input value={value.id} onChange={(event) => onChange({ ...value, id: event.target.value })} placeholder="484" />
           </label>
           <label>
-            <FieldLabel>闂傚倷鑳剁划顖炩€﹂崼銉ユ槬闁哄稁鍘奸悞?</FieldLabel>
+            <FieldLabel>状态</FieldLabel>
             <Select value={value.status} onValueChange={(next) => onChange({ ...value, status: next as ContentCase["status"] })}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
@@ -470,26 +451,17 @@ function CaseDialog({
             </Select>
           </label>
           <label className="sm:col-span-2">
-            <FieldLabel>闂傚倷绀侀幖顐ょ矓閺夋嚚娲敇椤兘鍋?</FieldLabel>
-            <Input value={value.title} onChange={(e) => onChange({ ...value, title: e.target.value })} />
+            <FieldLabel>标题</FieldLabel>
+            <Input value={value.title} onChange={(event) => onChange({ ...value, title: event.target.value })} />
           </label>
-          <label className="sm:col-span-2">
-            <FieldLabel>闂傚倷鐒﹂幃鍫曞磿鏉堛劍娅犻柤鎭掑劜濞?</FieldLabel>
-            <div className="mt-2 flex flex-col gap-2 sm:flex-row">
-              <Input
-                value={value.image}
-                onChange={(e) => onChange({ ...value, image: e.target.value })}
-                className="sm:flex-1"
-                placeholder="/images/case_1710000000_xxx.jpg"
-              />
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => imageInputRef.current?.click()}
-                disabled={uploadingImage}
-              >
+          <div className="sm:col-span-2 space-y-2">
+            <FieldLabel>图片</FieldLabel>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Input value={value.image} onChange={(event) => onChange({ ...value, image: event.target.value })} className="sm:flex-1" placeholder="/images/case_xxx.jpg" />
+              <Button type="button" variant="outline" onClick={() => imageInputRef.current?.click()} disabled={uploadingImage}>
                 {uploadingImage ? <LoaderCircle className="size-4 animate-spin" /> : <Upload className="size-4" />}
-                濠电偞鍨堕幐鎼佹晝閿濆洦顫?              </Button>
+                上传
+              </Button>
               <input
                 ref={imageInputRef}
                 type="file"
@@ -504,138 +476,120 @@ function CaseDialog({
                 }}
               />
             </div>
+          </div>
+          <label>
+            <FieldLabel>图片说明</FieldLabel>
+            <Input value={value.imageAlt} onChange={(event) => onChange({ ...value, imageAlt: event.target.value })} />
           </label>
           <label>
-            <FieldLabel>闂傚倷鐒﹂幃鍫曞磿鏉堛劍娅犻柤鎭掑劜濞呯娀鏌″搴′簼閻庢碍宀搁幃妤€鈽夊▍铏灴閿?</FieldLabel>
-            <Input value={value.imageAlt} onChange={(e) => onChange({ ...value, imageAlt: e.target.value })} />
-          </label>
-          <label>
-            <FieldLabel>闂傚倷绀侀幖顐λ囬銏犵？闁肩⒈鍓濇慨铏亜閺囨浜鹃悗娈垮枙缁瑥鐣烽崼鏇炵厸濠电姴鍊歌ⅷ</FieldLabel>
-            <Input value={value.sourceLabel} onChange={(e) => onChange({ ...value, sourceLabel: e.target.value })} />
+            <FieldLabel>来源标签</FieldLabel>
+            <Input value={value.sourceLabel} onChange={(event) => onChange({ ...value, sourceLabel: event.target.value })} />
           </label>
           <label className="sm:col-span-2">
-            <FieldLabel>闂傚倷绀侀幖顐λ囬銏犵？闁肩⒈鍓濇慨铏亜閺囨浜鹃梺鍝勭潤閸ャ劌鈧攱銇勯幒鍡椾壕婵?</FieldLabel>
-            <Input value={value.sourceUrl} onChange={(e) => onChange({ ...value, sourceUrl: e.target.value })} />
+            <FieldLabel>来源链接</FieldLabel>
+            <Input value={value.sourceUrl} onChange={(event) => onChange({ ...value, sourceUrl: event.target.value })} />
           </label>
           <label className="sm:col-span-2">
-            <FieldLabel>Github 闂傚倸鍊风粈浣规櫠娴犲纾婚柟鎹愬煐閺?</FieldLabel>
-            <Input value={value.githubUrl} onChange={(e) => onChange({ ...value, githubUrl: e.target.value })} />
+            <FieldLabel>Github 链接</FieldLabel>
+            <Input value={value.githubUrl} onChange={(event) => onChange({ ...value, githubUrl: event.target.value })} />
           </label>
           <label>
-            <FieldLabel>闂傚倷绀侀幉锛勬暜閹烘嚦娑樷槈濮橆厼浠?</FieldLabel>
+            <FieldLabel>分类</FieldLabel>
             <Select value={value.category} onValueChange={(next) => onChange({ ...value, category: next })}>
-              <SelectTrigger><SelectValue placeholder="闂傚倸鍊风欢锟犲磻閸曨垁鍥箥椤旂懓浜炬慨妯稿劚婵倻鈧娲樺畝绋跨暦閸楃偐鏋庨柟鐑樼箖閽? /></SelectTrigger>
-              <SelectContent>
-                {categories.map((item) => <SelectItem key={item.value} value={item.value}>{item.value}</SelectItem>)}
-              </SelectContent>
+              <SelectTrigger><SelectValue placeholder="选择分类" /></SelectTrigger>
+              <SelectContent>{categories.map((item) => <SelectItem key={item.value} value={item.value}>{item.value}</SelectItem>)}</SelectContent>
             </Select>
           </label>
           <label>
-            <FieldLabel>闂傚倷娴囬～澶嬬娴犲绀夐煫鍥ㄦ尵閺?</FieldLabel>
+            <FieldLabel>推荐</FieldLabel>
             <div className="flex h-11 items-center rounded-2xl border px-3">
-              <input
-                type="checkbox"
-                checked={value.featured}
-                onChange={(e) => onChange({ ...value, featured: e.target.checked })}
-                className="size-4"
-              />
+              <input type="checkbox" checked={value.featured} onChange={(event) => onChange({ ...value, featured: event.target.checked })} className="size-4" />
             </div>
           </label>
           <label>
-            <FieldLabel>婵犵數鍋犻幓顏嗙礊閳ь剚绻涙径瀣鐎殿噮鍋婃俊鍫曞川椤忓懐鈧姊洪弬銉︽珔闁哥噥鍨伴埢?</FieldLabel>
-            <Input type="number" value={value.usageCount} onChange={(e) => onChange({ ...value, usageCount: e.target.value })} />
+            <FieldLabel>使用次数</FieldLabel>
+            <Input type="number" value={value.usageCount} onChange={(event) => onChange({ ...value, usageCount: event.target.value })} />
           </label>
           <label>
-            <FieldLabel>闂傚倷娴囬妴鈧柛瀣崌閺岀喖顢涘鍐炬毉濡炪們鍎查崹鍓佹崲濞戙垹骞㈤煫鍥ㄦ尭閳峰姊?</FieldLabel>
-            <Input type="number" value={value.favoriteCount} onChange={(e) => onChange({ ...value, favoriteCount: e.target.value })} />
+            <FieldLabel>收藏次数</FieldLabel>
+            <Input type="number" value={value.favoriteCount} onChange={(event) => onChange({ ...value, favoriteCount: event.target.value })} />
           </label>
           <label>
-            <FieldLabel>婵犵绱曢崑娑㈩敄閸涱垪鍋撳☉鎺撴珚闁?</FieldLabel>
-            <Textarea value={value.styles} onChange={(e) => onChange({ ...value, styles: e.target.value })} className="min-h-20" />
+            <FieldLabel>风格</FieldLabel>
+            <Textarea value={value.styles} onChange={(event) => onChange({ ...value, styles: event.target.value })} className="min-h-20" />
           </label>
           <label>
-            <FieldLabel>闂傚倷绶氬缁樹繆閸ヮ剙纾块柕鍫濇噳閺?</FieldLabel>
-            <Textarea value={value.scenes} onChange={(e) => onChange({ ...value, scenes: e.target.value })} className="min-h-20" />
+            <FieldLabel>场景</FieldLabel>
+            <Textarea value={value.scenes} onChange={(event) => onChange({ ...value, scenes: event.target.value })} className="min-h-20" />
           </label>
           <label className="sm:col-span-2">
-            <FieldLabel>Prompt 闂傚倷鑳堕、濠冩叏閵堝鈧箓宕奸妷锝傚亾?</FieldLabel>
-            <Input value={value.promptPreview} onChange={(e) => onChange({ ...value, promptPreview: e.target.value })} />
+            <FieldLabel>Prompt 摘要</FieldLabel>
+            <Input value={value.promptPreview} onChange={(event) => onChange({ ...value, promptPreview: event.target.value })} />
           </label>
           <label className="sm:col-span-2">
-            <FieldLabel>闂備浇顕уù鐑藉箠閹捐瀚夋い鎺戝濮?Prompt</FieldLabel>
-            <Textarea value={value.prompt} onChange={(e) => onChange({ ...value, prompt: e.target.value })} className="min-h-32" />
+            <FieldLabel>完整 Prompt</FieldLabel>
+            <Textarea value={value.prompt} onChange={(event) => onChange({ ...value, prompt: event.target.value })} className="min-h-32" />
           </label>
         </div>
         <div className="space-y-3">
-          <div className="text-xs font-medium text-stone-500">婵犵妲呴崑鍛熆濡皷鍋撳鐓庣仸闁?</div>
+          <div className="text-xs font-medium text-stone-500">预览</div>
           {value.image ? (
-            <img
-              src={value.image}
-              alt={value.imageAlt || value.title}
-              className="max-h-72 w-full rounded-2xl border border-stone-100 object-cover"
-              onError={(event) => {
-                event.currentTarget.style.display = "none";
-              }}
-            />
+            <img src={value.image} alt={value.imageAlt || value.title} className="max-h-72 w-full rounded-2xl border border-stone-100 object-cover" />
           ) : (
-            <div className="flex h-40 items-center justify-center rounded-2xl border border-dashed border-stone-200 text-sm text-stone-400">
-              闂傚倷绀侀幖顐⑽涘Δ鍛９闁荤喐瀚堝☉銏犖у璺猴功閸婄偤姊洪崨濠冨瘷闁告劗鍋撳В?
-            </div>
+            <div className="flex h-40 items-center justify-center rounded-2xl border border-dashed border-stone-200 text-sm text-stone-400">暂无图片</div>
           )}
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>闂傚倷绀侀幉锟犳偡閿曞倹鍋嬫俊銈呭暟閻?</Button>
-          <Button onClick={onSave} disabled={saving}>
-            {saving ? <LoaderCircle className="size-4 animate-spin" /> : null}
-            婵犵數鍎戠徊钘壝洪敂鐐床闁稿瞼鍋為崑?          </Button>
+          <Button variant="outline" onClick={onClose}>取消</Button>
+          <Button onClick={onSave} disabled={saving}>{saving ? <LoaderCircle className="size-4 animate-spin" /> : null}保存</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 }
 
-function categoryToForm(category: ContentCategory): CategoryForm {
+function categoryToForm(item: ContentCategory): CategoryForm {
   return {
-    value: category.value || "",
-    zhTitle: String(category.title?.zh ?? ""),
-    enTitle: String(category.title?.en ?? ""),
-    zhDescription: String(category.description?.zh ?? ""),
-    enDescription: String(category.description?.en ?? ""),
-    cover: category.cover || "",
-    anchor: category.anchor || "",
-    templateAnchor: category.templateAnchor || "",
-    sortOrder: String(category.sortOrder ?? 0),
+    value: item.value,
+    zhTitle: item.title?.zh || "",
+    enTitle: item.title?.en || "",
+    zhDescription: item.description?.zh || "",
+    enDescription: item.description?.en || "",
+    cover: item.cover || "",
+    anchor: item.anchor || "",
+    templateAnchor: item.templateAnchor || "",
+    sortOrder: String(item.sortOrder || 0),
   };
 }
 
-function templateToForm(template: ContentTemplate): TemplateForm {
+function templateToForm(item: ContentTemplate): TemplateForm {
   return {
-    id: template.id || "",
-    zhTitle: String(template.title?.zh ?? ""),
-    enTitle: String(template.title?.en ?? ""),
-    zhDescription: String(template.description?.zh ?? ""),
-    enDescription: String(template.description?.en ?? ""),
-    category: template.category || "",
-    anchor: template.anchor || "",
-    cover: template.cover || "",
-    styles: (template.styles ?? []).join(", "),
-    scenes: (template.scenes ?? []).join(", "),
-    tags: (template.tags ?? []).join(", "),
-    zhUseWhen: String(template.useWhen?.zh ?? ""),
-    enUseWhen: String(template.useWhen?.en ?? ""),
-    guidanceZh: Array.isArray(template.guidance?.zh) ? (template.guidance.zh as string[]).join("\n") : String(template.guidance?.zh ?? ""),
-    guidanceEn: Array.isArray(template.guidance?.en) ? (template.guidance.en as string[]).join("\n") : String(template.guidance?.en ?? ""),
-    pitfallsZh: Array.isArray(template.pitfalls?.zh) ? (template.pitfalls.zh as string[]).join("\n") : String(template.pitfalls?.zh ?? ""),
-    pitfallsEn: Array.isArray(template.pitfalls?.en) ? (template.pitfalls.en as string[]).join("\n") : String(template.pitfalls?.en ?? ""),
-    exampleCases: (template.exampleCases ?? []).join(", "),
-    prompt: template.prompt || "",
-    sortOrder: String(template.sortOrder ?? 0),
+    id: item.id,
+    zhTitle: item.title?.zh || "",
+    enTitle: item.title?.en || "",
+    zhDescription: item.description?.zh || "",
+    enDescription: item.description?.en || "",
+    category: item.category || "",
+    anchor: item.anchor || "",
+    cover: item.cover || "",
+    styles: item.styles.join("\n"),
+    scenes: item.scenes.join("\n"),
+    tags: item.tags.join("\n"),
+    zhUseWhen: toMultiline(item.useWhen?.zh),
+    enUseWhen: toMultiline(item.useWhen?.en),
+    guidanceZh: toMultiline(item.guidance?.zh),
+    guidanceEn: toMultiline(item.guidance?.en),
+    pitfallsZh: toMultiline(item.pitfalls?.zh),
+    pitfallsEn: toMultiline(item.pitfalls?.en),
+    exampleCases: item.exampleCases.join(", "),
+    prompt: item.prompt || "",
+    sortOrder: String(item.sortOrder || 0),
   };
 }
 
 function caseToForm(item: ContentCase): CaseForm {
   return {
-    id: String(item.id ?? ""),
+    id: String(item.id),
     title: item.title || "",
     image: item.image || "",
     imageAlt: item.imageAlt || "",
@@ -644,13 +598,13 @@ function caseToForm(item: ContentCase): CaseForm {
     prompt: item.prompt || "",
     promptPreview: item.promptPreview || "",
     category: item.category || "",
-    styles: (item.styles ?? []).join(", "),
-    scenes: (item.scenes ?? []).join(", "),
-    featured: Boolean(item.featured),
-    usageCount: String(item.usageCount ?? 0),
-    favoriteCount: String(item.favoriteCount ?? 0),
+    styles: item.styles.join("\n"),
+    scenes: item.scenes.join("\n"),
+    featured: item.featured,
+    usageCount: String(item.usageCount || 0),
+    favoriteCount: String(item.favoriteCount || 0),
     githubUrl: item.githubUrl || "",
-    status: item.status,
+    status: item.status || "published",
   };
 }
 
@@ -714,25 +668,20 @@ function ContentPageContent() {
   const [templates, setTemplates] = useState<ContentTemplate[]>([]);
   const [cases, setCases] = useState<ContentCase[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-
   const [templateSearch, setTemplateSearch] = useState("");
   const [templateCategoryFilter, setTemplateCategoryFilter] = useState("");
   const [caseSearch, setCaseSearch] = useState("");
   const [caseCategoryFilter, setCaseCategoryFilter] = useState("");
   const [caseStatusFilter, setCaseStatusFilter] = useState("");
-
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
   const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
   const [caseDialogOpen, setCaseDialogOpen] = useState(false);
-
   const [categoryForm, setCategoryForm] = useState<CategoryForm>(emptyCategoryForm);
   const [templateForm, setTemplateForm] = useState<TemplateForm>(emptyTemplateForm);
   const [caseForm, setCaseForm] = useState<CaseForm>(emptyCaseForm);
-
   const [editingCategoryValue, setEditingCategoryValue] = useState<string | null>(null);
   const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null);
   const [editingCaseId, setEditingCaseId] = useState<number | null>(null);
-
   const [savingCategory, setSavingCategory] = useState(false);
   const [savingTemplate, setSavingTemplate] = useState(false);
   const [savingCase, setSavingCase] = useState(false);
@@ -748,20 +697,14 @@ function ContentPageContent() {
         fetchContentOverview(),
         fetchContentCategories(),
         fetchContentTemplates({ q: templateSearch, category: templateCategoryFilter }),
-        fetchContentCases({
-          q: caseSearch,
-          category: caseCategoryFilter,
-          status: caseStatusFilter,
-          page: 1,
-          pageSize: 1000,
-        }),
+        fetchContentCases({ q: caseSearch, category: caseCategoryFilter, status: caseStatusFilter, page: 1, pageSize: 1000 }),
       ]);
       setOverview(overviewData);
       setCategories(categoryData.items);
       setTemplates(templateData.items);
       setCases(caseData.items);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "闂傚倷绀侀幉鈥愁潖缂佹ɑ鍙忛柟顖ｇ亹瑜版帒鐐婃い鎺嗗亾缂佲偓閸愵喗鐓曟繛鎴濆船瀵箖鏌涢悢閿嬪枠闁哄备鍓濋幏鍛村传閸曞灚姣夐柣搴ゎ潐閹哥兘鎮為敃鈧銉╁礋椤掍胶绉跺銈嗗姂閸?);
+      toast.error(error instanceof Error ? error.message : "加载内容数据失败");
     } finally {
       setIsLoading(false);
     }
@@ -772,6 +715,12 @@ function ContentPageContent() {
   }, [loadAll]);
 
   const categoryOptions = useMemo(() => categories.map((item) => item.value), [categories]);
+
+  const tabs: Array<{ key: TabKey; label: string; count: number }> = [
+    { key: "cases", label: "案例", count: cases.length },
+    { key: "templates", label: "模板", count: templates.length },
+    { key: "categories", label: "分类", count: categories.length },
+  ];
 
   const openNewCategory = () => {
     setEditingCategoryValue(null);
@@ -814,9 +763,9 @@ function ContentPageContent() {
     try {
       const response = await uploadContentImage(file);
       setCaseForm((current) => ({ ...current, image: response.item.path }));
-      toast.success("闂傚倷鐒﹂幃鍫曞磿鏉堛劍娅犻柤鎭掑劜濞呯娀鏌″畵顔艰嫰閺呯娀姊绘繝搴′航闁告﹢绠栭幃鐑藉箛椤?);
+      toast.success("图片已上传");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "婵犵數鍋為崹鍫曞箰閹间焦鏅濋柨婵嗘处椤洟鏌涢锝嗙闁绘劕锕弻娑㈠箻濡も偓閸犳岸寮抽浣虹瘈闁靛繆鈧啿濮哥紓渚囧枛婢т粙骞?);
+      toast.error(error instanceof Error ? error.message : "上传图片失败");
     } finally {
       setUploadingCaseImage(false);
     }
@@ -826,11 +775,11 @@ function ContentPageContent() {
     setSavingCategory(true);
     try {
       await saveContentCategory(buildCategoryPayload(categoryForm), editingCategoryValue || undefined);
-      toast.success("闂傚倷绀侀幉锛勬暜閹烘嚦娑樷槈濮橆厼浠忓銈嗗姂閸╁嫰宕崨瀛橆棅妞ゆ劦鍋勯獮妯肩磼閻樿京鐭欓柟?);
+      toast.success("分类已保存");
       setCategoryDialogOpen(false);
       await loadAll();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "婵犵數鍎戠徊钘壝洪敂鐐床闁稿瞼鍋為崑銈夋煏婵炵偓娅呯紒鈧崱娑欑厱闁斥晛鍟伴幊鍡樸亜椤愵剛鐣辨い顓炴健楠炲棝骞嶉鍓у嫎闂?);
+      toast.error(error instanceof Error ? error.message : "保存分类失败");
     } finally {
       setSavingCategory(false);
     }
@@ -840,11 +789,11 @@ function ContentPageContent() {
     setSavingTemplate(true);
     try {
       await saveContentTemplate(buildTemplatePayload(templateForm), editingTemplateId || undefined);
-      toast.success("濠电姷顣藉Σ鍛村垂椤忓牆绀堟繝闈涙－閻斿棙淇婇娆掝劅闁哥喎鎳樺Λ鍛搭敃椤愩垹绠荤紓浣哄С缁瑩骞?);
+      toast.success("模板已保存");
       setTemplateDialogOpen(false);
       await loadAll();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "婵犵數鍎戠徊钘壝洪敂鐐床闁稿瞼鍋為崑銈夋煏婵炲灝鍓婚柣鏃傚帶閻掓椽鏌涢幇銊︽珖闁告垟鍓濈换婵嬪閳ュ啿濮哥紓渚囧枛婢т粙骞?);
+      toast.error(error instanceof Error ? error.message : "保存模板失败");
     } finally {
       setSavingTemplate(false);
     }
@@ -854,63 +803,57 @@ function ContentPageContent() {
     setSavingCase(true);
     try {
       await saveContentCase(buildCasePayload(caseForm), editingCaseId || undefined);
-      toast.success("濠电姷顣介崜婵嬨€冮崨瀛樺亱闁告侗鍨遍浠嬫煏婢跺牆鍔撮柛鐔锋嚇濡懘顢曢銏犵缂備胶濮崇划娆撳箖?);
+      toast.success("案例已保存");
       setCaseDialogOpen(false);
       await loadAll();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "婵犵數鍎戠徊钘壝洪敂鐐床闁稿瞼鍋為崑銈夋煏婵炲灝鍔存繛瀛樼墵閺屾盯顢曢敐鍥╃厒婵炴潙鍚嬮崝鏇⑩€﹂崸妤€绠氶柟娈垮枤缂堥亶鏌?);
+      toast.error(error instanceof Error ? error.message : "保存案例失败");
     } finally {
       setSavingCase(false);
     }
   };
 
   const removeCategory = async (value: string) => {
-    if (!confirm(`闂傚倷绀侀幉锛勬暜閻愬绠鹃柍褜鍓氱换娑㈠川椤撱垹寮伴悗瑙勬礃瀹€绋跨暦閸楃偐鏋庨柟鐑樼箖閽?${value}闂傚倷鐒︾€笛呯矙閹捐绀?) return;
+    if (!confirm(`删除分类 ${value}？`)) return;
     setDeletingCategory(value);
     try {
       await deleteContentCategory(value);
-      toast.success("闂傚倷绀侀幉锛勬暜閹烘嚦娑樷槈濮橆厼浠忓銈嗗姂閸╁嫰宕崨瀛樼厵缂備焦锚缁楁帡鏌ｈ箛濠冩珚婵?);
+      toast.success("分类已删除");
       await loadAll();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "闂傚倷绀侀幉锛勬暜閻愬绠鹃柍褜鍓氱换娑㈠川椤撱垹寮伴悗瑙勬礃瀹€绋跨暦閸楃偐鏋庨柟鐑樼箖閽戝鈹戦悩顔肩仾闁稿氦鍋愰崚鎺楀礈瑜庨崰?);
+      toast.error(error instanceof Error ? error.message : "删除分类失败");
     } finally {
       setDeletingCategory(null);
     }
   };
 
   const removeTemplate = async (id: string) => {
-    if (!confirm(`闂傚倷绀侀幉锛勬暜閻愬绠鹃柍褜鍓氱换娑㈠川椤撱埄鈧鎽堕敐澶嬬厓闁宠桨绀侀弳鐐电磼?${id}闂傚倷鐒︾€笛呯矙閹捐绀?) return;
+    if (!confirm(`删除模板 ${id}？`)) return;
     setDeletingTemplate(id);
     try {
       await deleteContentTemplate(id);
-      toast.success("濠电姷顣藉Σ鍛村垂椤忓牆绀堟繝闈涙－閻斿棙淇婇娆掝劅闁哥喎鎳橀弻鐔虹磼濡櫣鐟ㄩ梺璇茬箚閺呯姴顫?);
+      toast.success("模板已删除");
       await loadAll();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "闂傚倷绀侀幉锛勬暜閻愬绠鹃柍褜鍓氱换娑㈠川椤撱埄鈧鎽堕敐澶嬬厓闁宠桨绀侀弳鐐电磼閼搁潧绲绘い顓炴健楠炲棝骞嶉鍓у嫎闂?);
+      toast.error(error instanceof Error ? error.message : "删除模板失败");
     } finally {
       setDeletingTemplate(null);
     }
   };
 
   const removeCase = async (id: number) => {
-    if (!confirm(`闂傚倷绀侀幉锛勬暜閻愬绠鹃柍褜鍓氱换娑㈠川椤撱埄鈧銇勯埡浣靛仮鐎规洜鍘ч…銊╁川椤掑倻鐓?${id}闂傚倷鐒︾€笛呯矙閹捐绀?) return;
+    if (!confirm(`删除案例 ${id}？`)) return;
     setDeletingCase(id);
     try {
       await deleteContentCase(id);
-      toast.success("濠电姷顣介崜婵嬨€冮崨瀛樺亱闁告侗鍨遍浠嬫煏婢跺牆鍔撮柛鐔锋嚇閺岀喓绱掑Ο铏圭懆闂佽绻嗛弲鐘差潖?);
+      toast.success("案例已删除");
       await loadAll();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "闂傚倷绀侀幉锛勬暜閻愬绠鹃柍褜鍓氱换娑㈠川椤撱埄鈧銇勯埡浣靛仮鐎规洜鍘ч…銊╁川椤掑倻鐓戞繝鐢靛О閸ㄦ椽宕曢懖鈺佸灊闁告挆鍕瀭?);
+      toast.error(error instanceof Error ? error.message : "删除案例失败");
     } finally {
       setDeletingCase(null);
     }
   };
-
-  const tabs: Array<{ key: TabKey; label: string; count: number }> = [
-    { key: "cases", label: "濠电姷顣介崜婵嬨€冮崨瀛樺亱闁告侗鍨遍?, count: cases.length },
-    { key: "templates", label: "濠电姷顣藉Σ鍛村垂椤忓牆绀堟繝闈涙－閻?, count: templates.length },
-    { key: "categories", label: "闂傚倷绀侀幉锛勬暜閹烘嚦娑樷槈濮橆厼浠?, count: categories.length },
-  ];
 
   if (isLoading && !overview) {
     return (
@@ -925,23 +868,21 @@ function ContentPageContent() {
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div className="space-y-1">
           <div className="text-xs font-semibold uppercase tracking-[0.18em] text-stone-500">Content Library</div>
-          <h1 className="text-2xl font-semibold tracking-tight text-stone-950">闂傚倷绀侀幉锟犲礉閺囥垹绠犻幖鎼厛閺佸﹪鏌熼柇锕€鏋ゅ☉鎾崇Ч閺屻劌鈽夊Ο渚痪闂?</h1>
-          <div className="text-sm text-stone-500">闂傚倷绀侀幉锛勬暜閹烘嚦娑樷槈濮橆厼浠忓銈嗗姧缁犳垼绻氬┑鐐舵彧缂嶄胶妲愰敂鐣岀懝闁逞屽墮椤曪綁宕滄担鐟版櫝闂侀潧鐗嗛崐鍛婄閹灐褰掓晲閸偄娈愰梺琛″亾闁告劕鐪伴埀顒佸笒椤繈顢楁径濠傚缂傚倷绶￠崰姘跺磿閵堝洨鐭欏鑸靛姇閻掑灚銇勯幒鎴濃偓缁樼▔瀹ュ鐓ユ繛鎴灻顏堟煕婵犲嫬浠遍柡灞诲妼閳藉螣閸噮浼冮梻浣藉瀹曠敻宕伴弽褏鏆﹂柕澹倹鍕冪紓鍌欓檷閸ㄨ淇婇柆宥嗏拺闁革富鍘剧敮娑㈡煕閺冣偓鐢偛鈻庨姀銈呭瀭妞ゆ劑鍨荤粣鐐烘⒑閸濆嫮鈻夐柛妯恒偢瀹?API闂?</div>
+          <h1 className="text-2xl font-semibold tracking-tight text-stone-950">内容管理</h1>
+          <div className="text-sm text-stone-500">统一管理分类、模板、案例，并提供外部 API 访问。</div>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" onClick={() => void loadAll()}>
-            {isLoading ? <LoaderCircle className="size-4 animate-spin" /> : <Search className="size-4" />}
-            闂傚倷绀侀幉锛勬暜閿熺姴缁╅梺顒€绉撮拑?          </Button>
-          <Button onClick={openNewCase}><CirclePlus className="size-4" />闂傚倷绀侀幖顐﹀磹閻熼偊鐔嗘慨妞诲亾鐠侯垶鏌涢幇鐢靛帥婵炲瓨鐗犻弻娑㈩敃閿濆洨鐓傛繛?</Button>
+          <Button variant="outline" onClick={() => void loadAll()}>{isLoading ? <LoaderCircle className="size-4 animate-spin" /> : <Search className="size-4" />}刷新</Button>
+          <Button onClick={openNewCase}><CirclePlus className="size-4" />新增案例</Button>
         </div>
       </div>
 
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
-        <OverviewCard label="闂傚倷绀侀幉锛勬暜閹烘嚦娑樷槈濮橆厼浠? value={overview?.categories ?? 0} icon={<Layers3 className="size-5" />} />
-        <OverviewCard label="濠电姷顣藉Σ鍛村垂椤忓牆绀堟繝闈涙－閻? value={overview?.templates ?? 0} icon={<FileText className="size-5" />} />
-        <OverviewCard label="濠电姷顣介崜婵嬨€冮崨瀛樺亱闁告侗鍨遍? value={overview?.cases ?? 0} icon={<ImageIcon className="size-5" />} />
-        <OverviewCard label="闂佽娴烽幊鎾诲箟闄囬妵鎰板礃椤撴粈姹楅梺绋挎湰缁秹寮? value={overview?.publishedCases ?? 0} icon={<Sparkles className="size-5" />} />
-        <OverviewCard label="闂傚倷绀侀幖顐ょ矓閺夋嚚娲Ω閳哄﹥鏅? value={overview?.styleTags ?? 0} icon={<Tag className="size-5" />} />
+        <OverviewCard label="分类" value={overview?.categories ?? 0} icon={<Layers3 className="size-5" />} />
+        <OverviewCard label="模板" value={overview?.templates ?? 0} icon={<FileText className="size-5" />} />
+        <OverviewCard label="案例" value={overview?.cases ?? 0} icon={<ImageIcon className="size-5" />} />
+        <OverviewCard label="已发布" value={overview?.publishedCases ?? 0} icon={<Sparkles className="size-5" />} />
+        <OverviewCard label="标签" value={overview?.styleTags ?? 0} icon={<Tag className="size-5" />} />
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
@@ -952,9 +893,7 @@ function ContentPageContent() {
             onClick={() => setActiveTab(tab.key)}
             className={cn(
               "inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm transition",
-              activeTab === tab.key
-                ? "border-stone-950 bg-stone-950 text-white"
-                : "border-stone-200 bg-white text-stone-600 hover:border-stone-300",
+              activeTab === tab.key ? "border-stone-950 bg-stone-950 text-white" : "border-stone-200 bg-white text-stone-600 hover:border-stone-300",
             )}
           >
             {tab.label}
@@ -965,23 +904,19 @@ function ContentPageContent() {
 
       {activeTab === "categories" ? (
         <Card className="rounded-2xl border-white/80 bg-white/90 shadow-sm">
-          <SectionHeader
-            title="闂傚倷绀侀幉锛勬暜閹烘嚦娑樷槈濮橆厼浠?
-            description="缂傚倸鍊烽懗鑸靛垔鐎靛憡顫曢柡鍥ュ灩缁犳牕鈹戦悩鍙夋悙缂佲偓閸℃稒鐓曢柍鈺佸暟閹冲棙銇勯顒傜暤闁哄矉缍佹俊鎼佸Ψ閵夘喕鎮ｉ梻浣芥〃缁讹繝宕板Δ鍐煓濠㈣埖鍔曢悞鍨亜閹烘垵顏╃痪鎯ф贡缁辨帒螖閸曗斁鍋撻埀顒勬煕鐎ｎ偅灏伴柟宄版嚇瀹曠兘顢橀悙鍏哥礃婵犵妲呴崑鍡樻櫠濡ゅ嫬缍橀梻渚€鈧偛鑻崢鎼佹煟閹虹偟鐣辨い鏇秮楠炴劖鎯旈～顓熷攭闂備礁鎼ˇ鎵偓绗涘應鍋撳顓犲弨闁诡喗顨嗛幏鍛村礃椤垶顥嶉梻浣虹《閺呮盯骞婂鈧濠氬Ω閵夘喗鍍甸梺鍛婎殘閸嬫﹢宕犻弽顓熲拺?
-            action={<Button onClick={openNewCategory}><Plus className="size-4" />闂傚倷绀侀幖顐﹀磹閻熼偊鐔嗘慨妞诲亾鐠侯垶鏌涢幇闈涙灈缂佲偓閸℃稒鐓曢柍鈺佸暟閹冲棙銇?</Button>}
-          />
+          <SectionHeader title="分类" description="管理分类唯一值、标题、描述和排序。" action={<Button onClick={openNewCategory}><Plus className="size-4" />新增分类</Button>} />
           <CardContent className="p-0">
             <div className="overflow-x-auto">
               <table className="w-full min-w-[960px] text-sm">
                 <thead className="bg-stone-50 text-left text-xs uppercase tracking-wide text-stone-500">
                   <tr>
                     <th className="px-5 py-3">Value</th>
-                    <th className="px-5 py-3">闂傚倷绀侀幖顐ょ矓閺夋嚚娲敇椤兘鍋?</th>
-                    <th className="px-5 py-3">闂傚倷鑳堕、濠囶敋瑜忛幑銏犖旈崨顓㈠敹?</th>
+                    <th className="px-5 py-3">标题</th>
+                    <th className="px-5 py-3">描述</th>
                     <th className="px-5 py-3">Anchor</th>
-                    <th className="px-5 py-3">濠电姷顣藉Σ鍛村垂椤忓牆绀堟繝闈涙－閻斿棙鎱ㄥ璇蹭壕闂佸搫琚崝宀勶綖濠靛纭€闁绘劖婢樼€?</th>
-                    <th className="px-5 py-3">闂傚倷绀佸﹢閬嶅磿閵堝洦鏆滈柟鐑樻婵?</th>
-                    <th className="px-5 py-3">闂傚倷鑳堕幊鎾绘倶濠靛牏鐭撶€规洖娲ㄧ粈?</th>
+                    <th className="px-5 py-3">模板锚点</th>
+                    <th className="px-5 py-3">排序</th>
+                    <th className="px-5 py-3">操作</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -995,16 +930,11 @@ function ContentPageContent() {
                       <td className="px-5 py-4 text-stone-500">{item.sortOrder}</td>
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-2">
-                          <Button variant="outline" size="sm" onClick={() => openEditCategory(item)}><Pencil className="size-4" />缂傚倸鍊搁崐鎼佸磹瑜版帗鍋嬮柣鎰仛椤?</Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="border-rose-200 text-rose-600 hover:bg-rose-50"
-                            onClick={() => void removeCategory(item.value)}
-                            disabled={deletingCategory === item.value}
-                          >
+                          <Button variant="outline" size="sm" onClick={() => openEditCategory(item)}><Pencil className="size-4" />编辑</Button>
+                          <Button variant="outline" size="sm" className="border-rose-200 text-rose-600 hover:bg-rose-50" onClick={() => void removeCategory(item.value)} disabled={deletingCategory === item.value}>
                             {deletingCategory === item.value ? <LoaderCircle className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
-                            闂傚倷绀侀幉锛勬暜閻愬绠鹃柍褜鍓氱换?                          </Button>
+                            删除
+                          </Button>
                         </div>
                       </td>
                     </tr>
@@ -1018,25 +948,20 @@ function ContentPageContent() {
 
       {activeTab === "templates" ? (
         <Card className="rounded-2xl border-white/80 bg-white/90 shadow-sm">
-          <SectionHeader
-            title="濠电姷顣藉Σ鍛村垂椤忓牆绀堟繝闈涙－閻?
-            description="闂傚倷娴囬妴鈧柛瀣尰閵囧嫰寮介妸褉妲堥梺浼欏瘜閸ｏ綁寮婚悢鐓庣闁兼祴鏅濋悡鍌炴⒑缁嬭儻顫﹂柛鏃€鍨舵穱濠勨偓娑櫳戞刊鎾煟閻旂顥嬫俊顖氭濮婃椽宕ㄦ繝鍌滅懆濠碘槅鍋呯粙鎾诲箖椤曗偓椤㈡洟濡堕崶顑芥敽婵犵數鍋為崹鐔煎箠閸ヮ剙纾婚柟鐐綑缁剁偞绻涢幋鐐寸殤妞わ富鍠楃换娑氣偓鐢殿焾琚ㄩ梺绋块瀹曨剟顢氶敐鍡╂Ч閹艰揪绲块敍婵嬫⒑閸濆嫮鈻夐柛鎾寸〒閺侇噣宕卞☉娆戝幍缂傚倷鐒﹂敋濠殿喖顦甸弻鏇㈠炊閵婏妇娈ら梺褰掝棑婵挳顢樻總绋跨闁挎繂鎳嶆竟鏇熺箾鏉堝墽鍒版繝鈧柆宥呭瀭闁兼祴鏅濈壕鍏肩箾閹寸偟鎳冮柛鏂诲€濋弻鐔兼煥鐎ｎ偆鍑″銈傛櫅閵堢鐣烽悡搴叆闁告侗鍓涢惌妤呮煟鎼淬埄鍟忛柛鐘愁殔鐓ゆ繝濠傜墕閺嬩線鏌曢崼婵愭Ц鏉?
-            action={<Button onClick={openNewTemplate}><Plus className="size-4" />闂傚倷绀侀幖顐﹀磹閻熼偊鐔嗘慨妞诲亾鐠侯垶鏌涢幇鈺佸闁绘梻鍘ч悞娲煕閹般劍娅囬柛?</Button>}
-          />
+          <SectionHeader title="模板" description="支持搜索、按分类筛选，以及编辑提示词、标签和案例引用。" action={<Button onClick={openNewTemplate}><Plus className="size-4" />新增模板</Button>} />
           <div className="flex flex-wrap gap-2 border-b border-stone-100 px-5 py-4">
             <div className="flex min-w-72 flex-1 items-center gap-2 rounded-2xl border border-stone-200 bg-white px-3">
               <Search className="size-4 text-stone-400" />
-              <Input value={templateSearch} onChange={(e) => setTemplateSearch(e.target.value)} placeholder="闂傚倷鑳堕幊鎾诲触鐎ｎ剙鍨濋幖娣妼绾惧ジ鏌曟繛鍨壔闁绘梻鍘ч悞娲煕閹般劍娅囬柛?ID闂傚倷绶氬褍螞閺冨牊鍊块柨鏇炲€归崑澶愭煥濠靛棙锛旂紒鎲嬬稻娣囧﹪顢涘鍛偓濠囨煕鐎ｎ偅灏伴柟宄版噽缁數鈧綆浜濋鍡涙⒒? className="border-0 px-0 shadow-none focus-visible:ring-0" />
+              <Input value={templateSearch} onChange={(event) => setTemplateSearch(event.target.value)} placeholder="搜索模板 ID、标题、说明" className="border-0 px-0 shadow-none focus-visible:ring-0" />
             </div>
             <Select value={templateCategoryFilter || "__all__"} onValueChange={(next) => setTemplateCategoryFilter(next === "__all__" ? "" : next)}>
-              <SelectTrigger className="w-56"><SelectValue placeholder="闂傚倷鑳堕…鍫㈡崲閸儱绀夐柟杈剧畱绾惧潡鏌熺紒銏犳灈缂佲偓閸℃稒鐓曢柍鈺佸暟閹冲棙銇? /></SelectTrigger>
+              <SelectTrigger className="w-56"><SelectValue placeholder="全部分类" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="__all__">闂傚倷鑳堕…鍫㈡崲閸儱绀夐柟杈剧畱绾惧潡鏌熺紒銏犳灈缂佲偓閸℃稒鐓曢柍鈺佸暟閹冲棙銇?</SelectItem>
+                <SelectItem value="__all__">全部分类</SelectItem>
                 {categoryOptions.map((item) => <SelectItem key={item} value={item}>{item}</SelectItem>)}
               </SelectContent>
             </Select>
-            <Button variant="outline" onClick={() => { setTemplateSearch(""); setTemplateCategoryFilter(""); }}>
-              <Filter className="size-4" />濠电姷鏁搁崑鐐哄箰閹间礁绠犻柟鐗堟緲閻?            </Button>
+            <Button variant="outline" onClick={() => { setTemplateSearch(""); setTemplateCategoryFilter(""); }}><Filter className="size-4" />清空</Button>
           </div>
           <CardContent className="p-0">
             <div className="overflow-x-auto">
@@ -1044,12 +969,12 @@ function ContentPageContent() {
                 <thead className="bg-stone-50 text-left text-xs uppercase tracking-wide text-stone-500">
                   <tr>
                     <th className="px-5 py-3">ID</th>
-                    <th className="px-5 py-3">闂傚倷绀侀幖顐ょ矓閺夋嚚娲敇椤兘鍋?</th>
-                    <th className="px-5 py-3">闂傚倷绀侀幉锛勬暜閹烘嚦娑樷槈濮橆厼浠?</th>
-                    <th className="px-5 py-3">闂傚倷绀侀幖顐ょ矓閺夋嚚娲Ω閳哄﹥鏅?</th>
-                    <th className="px-5 py-3">濠电姷顣介崜婵嬨€冮崨瀛樺亱闁告侗鍨遍?</th>
-                    <th className="px-5 py-3">闂傚倷绀佸﹢閬嶅磿閵堝洦鏆滈柟鐑樻婵?</th>
-                    <th className="px-5 py-3">闂傚倷鑳堕幊鎾绘倶濠靛牏鐭撶€规洖娲ㄧ粈?</th>
+                    <th className="px-5 py-3">标题</th>
+                    <th className="px-5 py-3">分类</th>
+                    <th className="px-5 py-3">标签</th>
+                    <th className="px-5 py-3">案例</th>
+                    <th className="px-5 py-3">排序</th>
+                    <th className="px-5 py-3">操作</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1063,25 +988,18 @@ function ContentPageContent() {
                       <td className="px-5 py-4 text-stone-500">{item.category || "-"}</td>
                       <td className="px-5 py-4">
                         <div className="flex flex-wrap gap-1">
-                          {[...item.styles, ...item.scenes, ...item.tags].slice(0, 6).map((tag) => (
-                            <Badge key={tag} variant="outline" className="rounded-md">{tag}</Badge>
-                          ))}
+                          {[...item.styles, ...item.scenes, ...item.tags].slice(0, 6).map((tag) => <Badge key={tag} variant="outline" className="rounded-md">{tag}</Badge>)}
                         </div>
                       </td>
                       <td className="px-5 py-4 text-stone-500">{item.exampleCases.join(", ") || "-"}</td>
                       <td className="px-5 py-4 text-stone-500">{item.sortOrder}</td>
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-2">
-                          <Button variant="outline" size="sm" onClick={() => openEditTemplate(item)}><Pencil className="size-4" />缂傚倸鍊搁崐鎼佸磹瑜版帗鍋嬮柣鎰仛椤?</Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="border-rose-200 text-rose-600 hover:bg-rose-50"
-                            onClick={() => void removeTemplate(item.id)}
-                            disabled={deletingTemplate === item.id}
-                          >
+                          <Button variant="outline" size="sm" onClick={() => openEditTemplate(item)}><Pencil className="size-4" />编辑</Button>
+                          <Button variant="outline" size="sm" className="border-rose-200 text-rose-600 hover:bg-rose-50" onClick={() => void removeTemplate(item.id)} disabled={deletingTemplate === item.id}>
                             {deletingTemplate === item.id ? <LoaderCircle className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
-                            闂傚倷绀侀幉锛勬暜閻愬绠鹃柍褜鍓氱换?                          </Button>
+                            删除
+                          </Button>
                         </div>
                       </td>
                     </tr>
@@ -1095,47 +1013,42 @@ function ContentPageContent() {
 
       {activeTab === "cases" ? (
         <Card className="rounded-2xl border-white/80 bg-white/90 shadow-sm">
-          <SectionHeader
-            title="濠电姷顣介崜婵嬨€冮崨瀛樺亱闁告侗鍨遍?
-            description="闂傚倷娴囬妴鈧柛瀣尰閵囧嫰寮介妸褉妲堥梺浼欏瘜閸ｏ綁寮婚悢铏圭煓婵炲棛鍋撶瑧闂備焦鎮堕崝灞矫归悜鑺ュ仏闁诡垼鐏濊瀹曞爼鏁愰崨顒€顥氬┑鐐舵彧缁蹭粙骞栭銈囨噮闂傚倷娴囬鏍礂濞戞氨鐭嗗〒姘ｅ亾妤犵偛绻戠€靛ジ寮堕幋鐙€妲梻浣筋潐閸庡吋鎱ㄩ妶澶婃辈婵炴垯鍨洪崐鍨箾閹寸偟鎳愭繛鍫熸礋閺岀喖顢欓懖鈺嬬礊濠碘€冲级閸旀瑩鏁愰悙渚晩闁告挆灞拘ュ┑掳鍊楁慨鐑藉磻閻樻祴鏋栨繛鎴炲殠娴滃綊鏌＄仦璇插姕闁稿骸閰ｉ幃妤€鈽夊▍顓т簼瀵板嫬顓奸崶鈺冿紳闂佺鏈粙鎾存櫠瀹曞洨纾煎Λ鐗堢箓娴滄壆鈧娲栭悥鐓庣暦濠婂棭妲诲銈忕到椤兘寮婚弴銏犲耿闁哄浄绱曢妶纾杘mpt闂傚倷绶氬褍螞閺冨牊鍤勯柛顐ｆ礀绾惧潡鎮峰▎蹇擃仾闁稿海鍠栭弻銊╁籍閸ャ劎銆婇梺鑽ゅ枂閸ㄤ粙寮婚敓鐘茬劦妞ゆ帒瀚粻姘舵煟濡も偓閻楁粌螞韫囨稒鈷戦弶鐐靛缁佷即鏌涢埡浣瑰枠闁糕斁鍋?
-            action={<Button onClick={openNewCase}><Plus className="size-4" />闂傚倷绀侀幖顐﹀磹閻熼偊鐔嗘慨妞诲亾鐠侯垶鏌涢幇鐢靛帥婵炲瓨鐗犻弻娑㈩敃閿濆洨鐓傛繛?</Button>}
-          />
+          <SectionHeader title="案例" description="支持按分类、状态和关键字搜索，并可编辑图片、Prompt、热度与收藏数。" action={<Button onClick={openNewCase}><Plus className="size-4" />新增案例</Button>} />
           <div className="grid gap-3 border-b border-stone-100 px-5 py-4 lg:grid-cols-4">
             <div className="flex items-center gap-2 rounded-2xl border border-stone-200 bg-white px-3">
               <Search className="size-4 text-stone-400" />
-              <Input value={caseSearch} onChange={(e) => setCaseSearch(e.target.value)} placeholder="闂傚倷鑳堕幊鎾诲触鐎ｎ剙鍨濋幖娣妼绾惧ジ鏌曟繛鐐珔闁告劏鍋撻梻浣规偠閸庢椽宕滈敃鍌氭辈妞ゆ牜鍋為悡蹇涙煕閳╁啯绀夌紒浣侯棝ompt闂傚倷绶氬褍螞閺冨牊鍊块柨鏇楀亾妞ゎ厼娲Λ鍐ㄢ槈閹烘挻鏆? className="border-0 px-0 shadow-none focus-visible:ring-0" />
+              <Input value={caseSearch} onChange={(event) => setCaseSearch(event.target.value)} placeholder="搜索标题、Prompt、来源" className="border-0 px-0 shadow-none focus-visible:ring-0" />
             </div>
             <Select value={caseCategoryFilter || "__all__"} onValueChange={(next) => setCaseCategoryFilter(next === "__all__" ? "" : next)}>
-              <SelectTrigger><SelectValue placeholder="闂傚倷鑳堕…鍫㈡崲閸儱绀夐柟杈剧畱绾惧潡鏌熺紒銏犳灈缂佲偓閸℃稒鐓曢柍鈺佸暟閹冲棙銇? /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder="全部分类" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="__all__">闂傚倷鑳堕…鍫㈡崲閸儱绀夐柟杈剧畱绾惧潡鏌熺紒銏犳灈缂佲偓閸℃稒鐓曢柍鈺佸暟閹冲棙銇?</SelectItem>
+                <SelectItem value="__all__">全部分类</SelectItem>
                 {categoryOptions.map((item) => <SelectItem key={item} value={item}>{item}</SelectItem>)}
               </SelectContent>
             </Select>
             <Select value={caseStatusFilter || "__all__"} onValueChange={(next) => setCaseStatusFilter(next === "__all__" ? "" : next)}>
-              <SelectTrigger><SelectValue placeholder="闂傚倷鑳堕…鍫㈡崲閸儱绀夐柟杈剧畱绾惧潡鏌熺紒銏犳灍闁稿鍔欓弻銈夊传閵夘喗姣岄梺? /></SelectTrigger>
+              <SelectTrigger><SelectValue placeholder="全部状态" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="__all__">闂傚倷鑳堕…鍫㈡崲閸儱绀夐柟杈剧畱绾惧潡鏌熺紒銏犳灍闁稿鍔欓弻銈夊传閵夘喗姣岄梺?</SelectItem>
+                <SelectItem value="__all__">全部状态</SelectItem>
                 <SelectItem value="published">published</SelectItem>
                 <SelectItem value="draft">draft</SelectItem>
                 <SelectItem value="archived">archived</SelectItem>
               </SelectContent>
             </Select>
-            <Button variant="outline" onClick={() => { setCaseSearch(""); setCaseCategoryFilter(""); setCaseStatusFilter(""); }}>
-              <Filter className="size-4" />濠电姷鏁搁崑鐐哄箰閹间礁绠犻柟鐗堟緲閻?            </Button>
+            <Button variant="outline" onClick={() => { setCaseSearch(""); setCaseCategoryFilter(""); setCaseStatusFilter(""); }}><Filter className="size-4" />清空</Button>
           </div>
           <CardContent className="p-0">
             <div className="overflow-x-auto">
               <table className="w-full min-w-[1280px] text-sm">
                 <thead className="bg-stone-50 text-left text-xs uppercase tracking-wide text-stone-500">
                   <tr>
-                    <th className="px-5 py-3">婵犵妲呴崑鍛熆濡皷鍋撳鐓庣仸闁?</th>
-                    <th className="px-5 py-3">闂傚倷绀侀幖顐ょ矓閺夋嚚娲敇椤兘鍋?</th>
-                    <th className="px-5 py-3">闂傚倷绀侀幉锛勬暜閹烘嚦娑樷槈濮橆厼浠?</th>
-                    <th className="px-5 py-3">闂傚倷鑳剁划顖炩€﹂崼銉ユ槬闁哄稁鍘奸悞?</th>
-                    <th className="px-5 py-3">闂傚倷绀佸﹢閬嶁€﹂崼婢濇椽鏁冮崒娑樹函?</th>
-                    <th className="px-5 py-3">闂傚倷绀侀幖顐ょ矓閺夋嚚娲Ω閳哄﹥鏅?</th>
-                    <th className="px-5 py-3">闂傚倷鑳堕幊鎾绘倶濠靛牏鐭撶€规洖娲ㄧ粈?</th>
+                    <th className="px-5 py-3">预览</th>
+                    <th className="px-5 py-3">标题</th>
+                    <th className="px-5 py-3">分类</th>
+                    <th className="px-5 py-3">状态</th>
+                    <th className="px-5 py-3">指标</th>
+                    <th className="px-5 py-3">标签</th>
+                    <th className="px-5 py-3">操作</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1147,12 +1060,12 @@ function ContentPageContent() {
                       <td className="px-5 py-4">
                         <div className="font-medium text-stone-900">{item.title}</div>
                         <div className="mt-1 line-clamp-3 max-w-[28rem] text-xs text-stone-500">{item.promptPreview || item.prompt}</div>
-                        <div className="mt-2 text-xs text-stone-400">{item.sourceLabel || "-"} 闂?{item.sourceUrl || "-"}</div>
+                        <div className="mt-2 text-xs text-stone-400">{item.sourceLabel || "-"} | {item.sourceUrl || "-"}</div>
                       </td>
                       <td className="px-5 py-4 text-stone-500">{item.category || "-"}</td>
                       <td className="px-5 py-4">
                         <Badge variant={item.status === "published" ? "success" : item.status === "draft" ? "warning" : "outline"}>{item.status}</Badge>
-                        {item.featured ? <Badge variant="violet" className="ml-2">闂傚倷娴囬～澶嬬娴犲绀夐煫鍥ㄦ尵閺?</Badge> : null}
+                        {item.featured ? <Badge variant="violet" className="ml-2">推荐</Badge> : null}
                       </td>
                       <td className="px-5 py-4 text-stone-500">
                         <div className="flex items-center gap-2"><Star className="size-4" />{item.favoriteCount}</div>
@@ -1160,23 +1073,16 @@ function ContentPageContent() {
                       </td>
                       <td className="px-5 py-4">
                         <div className="flex flex-wrap gap-1">
-                          {[...item.styles, ...item.scenes].slice(0, 8).map((tag) => (
-                            <Badge key={tag} variant="outline" className="rounded-md">{tag}</Badge>
-                          ))}
+                          {[...item.styles, ...item.scenes].slice(0, 8).map((tag) => <Badge key={tag} variant="outline" className="rounded-md">{tag}</Badge>)}
                         </div>
                       </td>
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-2">
-                          <Button variant="outline" size="sm" onClick={() => openEditCase(item)}><Pencil className="size-4" />缂傚倸鍊搁崐鎼佸磹瑜版帗鍋嬮柣鎰仛椤?</Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="border-rose-200 text-rose-600 hover:bg-rose-50"
-                            onClick={() => void removeCase(item.id)}
-                            disabled={deletingCase === item.id}
-                          >
+                          <Button variant="outline" size="sm" onClick={() => openEditCase(item)}><Pencil className="size-4" />编辑</Button>
+                          <Button variant="outline" size="sm" className="border-rose-200 text-rose-600 hover:bg-rose-50" onClick={() => void removeCase(item.id)} disabled={deletingCase === item.id}>
                             {deletingCase === item.id ? <LoaderCircle className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
-                            闂傚倷绀侀幉锛勬暜閻愬绠鹃柍褜鍓氱换?                          </Button>
+                            删除
+                          </Button>
                         </div>
                       </td>
                     </tr>
@@ -1188,39 +1094,9 @@ function ContentPageContent() {
         </Card>
       ) : null}
 
-      <CategoryDialog
-        open={categoryDialogOpen}
-        value={categoryForm}
-        onChange={setCategoryForm}
-        onClose={() => setCategoryDialogOpen(false)}
-        onSave={() => void saveCategory()}
-        saving={savingCategory}
-        originalValue={editingCategoryValue}
-      />
-
-      <TemplateDialog
-        open={templateDialogOpen}
-        value={templateForm}
-        onChange={setTemplateForm}
-        onClose={() => setTemplateDialogOpen(false)}
-        onSave={() => void saveTemplate()}
-        saving={savingTemplate}
-        originalId={editingTemplateId}
-        categories={categories}
-      />
-
-      <CaseDialog
-        open={caseDialogOpen}
-        value={caseForm}
-        onChange={setCaseForm}
-        onClose={() => setCaseDialogOpen(false)}
-        onSave={() => void saveCase()}
-        saving={savingCase}
-        onUploadImage={(file) => void uploadCaseImage(file)}
-        uploadingImage={uploadingCaseImage}
-        originalId={editingCaseId}
-        categories={categories}
-      />
+      <CategoryDialog open={categoryDialogOpen} value={categoryForm} onChange={setCategoryForm} onClose={() => setCategoryDialogOpen(false)} onSave={() => void saveCategory()} saving={savingCategory} originalValue={editingCategoryValue} />
+      <TemplateDialog open={templateDialogOpen} value={templateForm} onChange={setTemplateForm} onClose={() => setTemplateDialogOpen(false)} onSave={() => void saveTemplate()} saving={savingTemplate} originalId={editingTemplateId} categories={categories} />
+      <CaseDialog open={caseDialogOpen} value={caseForm} onChange={setCaseForm} onClose={() => setCaseDialogOpen(false)} onSave={() => void saveCase()} saving={savingCase} onUploadImage={(file) => void uploadCaseImage(file)} uploadingImage={uploadingCaseImage} originalId={editingCaseId} categories={categories} />
     </section>
   );
 }
