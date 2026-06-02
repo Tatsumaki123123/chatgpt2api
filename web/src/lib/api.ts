@@ -276,6 +276,82 @@ export type RegisterConfig = {
   }>;
 };
 
+export type LocalizedText = {
+  zh?: string;
+  en?: string;
+  [key: string]: unknown;
+};
+
+export type ContentCategory = {
+  value: string;
+  title: LocalizedText;
+  description: LocalizedText;
+  cover: string;
+  anchor: string;
+  templateAnchor: string;
+  sortOrder: number;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+};
+
+export type ContentTemplate = {
+  id: string;
+  title: LocalizedText;
+  description: LocalizedText;
+  category: string;
+  anchor: string;
+  cover: string;
+  styles: string[];
+  scenes: string[];
+  tags: string[];
+  useWhen: LocalizedText;
+  guidance: LocalizedText;
+  pitfalls: LocalizedText;
+  exampleCases: number[];
+  prompt: string;
+  sortOrder: number;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+};
+
+export type ContentCaseStatus = "draft" | "published" | "archived";
+
+export type ContentCase = {
+  id: number;
+  title: string;
+  image: string;
+  imageAlt: string;
+  sourceLabel: string;
+  sourceUrl: string;
+  prompt: string;
+  promptPreview: string;
+  category: string;
+  styles: string[];
+  scenes: string[];
+  featured: boolean;
+  usageCount: number;
+  favoriteCount: number;
+  githubUrl: string;
+  status: ContentCaseStatus;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+};
+
+export type ContentOverview = {
+  categories: number;
+  templates: number;
+  cases: number;
+  publishedCases: number;
+  styleTags: number;
+};
+
+export type ContentCaseListResponse = {
+  items: ContentCase[];
+  total: number;
+  page: number;
+  pageSize: number;
+};
+
 export async function login(authKey: string) {
   const normalizedAuthKey = String(authKey || "").trim();
   return httpRequest<LoginResponse>("/auth/login", {
@@ -626,6 +702,86 @@ export async function stopRegister() {
 
 export async function resetRegister() {
   return httpRequest<{ register: RegisterConfig }>("/api/register/reset", { method: "POST" });
+}
+
+export async function fetchContentOverview() {
+  return httpRequest<ContentOverview>("/api/content/overview");
+}
+
+export async function fetchContentCategories() {
+  return httpRequest<{ items: ContentCategory[] }>("/api/content/categories");
+}
+
+export async function saveContentCategory(category: ContentCategory, originalValue?: string) {
+  const path = originalValue
+    ? `/api/content/categories/${encodeURIComponent(originalValue)}`
+    : "/api/content/categories";
+  return httpRequest<{ item: ContentCategory; items: ContentCategory[] }>(path, {
+    method: originalValue ? "PUT" : "POST",
+    body: category,
+  });
+}
+
+export async function deleteContentCategory(value: string) {
+  return httpRequest<{ items: ContentCategory[] }>(`/api/content/categories/${encodeURIComponent(value)}`, {
+    method: "DELETE",
+  });
+}
+
+export async function fetchContentTemplates(filters: { q?: string; category?: string } = {}) {
+  const params = new URLSearchParams();
+  if (filters.q) params.set("q", filters.q);
+  if (filters.category) params.set("category", filters.category);
+  return httpRequest<{ items: ContentTemplate[] }>(`/api/content/templates${params.toString() ? `?${params.toString()}` : ""}`);
+}
+
+export async function saveContentTemplate(template: ContentTemplate, originalId?: string) {
+  const path = originalId ? `/api/content/templates/${encodeURIComponent(originalId)}` : "/api/content/templates";
+  return httpRequest<{ item: ContentTemplate }>(path, {
+    method: originalId ? "PUT" : "POST",
+    body: template,
+  });
+}
+
+export async function deleteContentTemplate(templateId: string) {
+  return httpRequest<{ ok: boolean }>(`/api/content/templates/${encodeURIComponent(templateId)}`, {
+    method: "DELETE",
+  });
+}
+
+export async function fetchContentCases(filters: {
+  q?: string;
+  status?: string;
+  category?: string;
+  style?: string;
+  scene?: string;
+  featured?: string;
+  sort?: string;
+  order?: string;
+  page?: number;
+  pageSize?: number;
+} = {}) {
+  const params = new URLSearchParams();
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && String(value).trim() !== "") {
+      params.set(key, String(value));
+    }
+  });
+  return httpRequest<ContentCaseListResponse>(`/api/content/cases${params.toString() ? `?${params.toString()}` : ""}`);
+}
+
+export async function saveContentCase(item: ContentCase, originalId?: number) {
+  const path = originalId ? `/api/content/cases/${originalId}` : "/api/content/cases";
+  return httpRequest<{ item: ContentCase }>(path, {
+    method: originalId ? "PUT" : "POST",
+    body: item,
+  });
+}
+
+export async function deleteContentCase(caseId: number) {
+  return httpRequest<{ ok: boolean }>(`/api/content/cases/${caseId}`, {
+    method: "DELETE",
+  });
 }
 
 // ── CPA (CLIProxyAPI) ──────────────────────────────────────────────

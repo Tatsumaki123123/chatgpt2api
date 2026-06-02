@@ -13,6 +13,7 @@ import { clearStoredAuthSession, type StoredAuthSession } from "@/store/auth";
 
 const adminNavItems = [
   { href: "/image", label: "画图" },
+  { href: "/content", label: "内容管理" },
   { href: "/accounts", label: "号池管理" },
   { href: "/register", label: "注册机" },
   { href: "/image-manager", label: "图片管理" },
@@ -136,3 +137,4 @@ export function TopNav() {
     </header>
   );
 }
+
