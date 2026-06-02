@@ -3,6 +3,7 @@
 import { Import, LoaderCircle, Search } from "lucide-react";
 import { useMemo } from "react";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -41,7 +42,11 @@ export function ImportBrowserDialog() {
       return remoteFiles;
     }
     return remoteFiles.filter((item) => {
-      return item.email.toLowerCase().includes(query) || item.name.toLowerCase().includes(query);
+      return (
+        item.email.toLowerCase().includes(query)
+        || item.name.toLowerCase().includes(query)
+        || String(item.proxy_url || "").toLowerCase().includes(query)
+      );
     });
   }, [fileQuery, remoteFiles]);
 
@@ -122,8 +127,15 @@ export function ImportBrowserDialog() {
                       checked={selectedNames.includes(item.name)}
                       onCheckedChange={(checked) => toggleFile(item.name, Boolean(checked))}
                     />
-                    <div className="min-w-0">
-                      <div className="truncate text-sm font-medium text-stone-700">{item.email || item.name}</div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex min-w-0 items-center gap-2">
+                        <div className="truncate text-sm font-medium text-stone-700">{item.email || item.name}</div>
+                        {item.proxy_url ? (
+                          <Badge variant="success" className="shrink-0 rounded-md px-1.5 py-0 text-[10px]" title={item.proxy_url}>
+                            代理
+                          </Badge>
+                        ) : null}
+                      </div>
                       <div className="truncate text-xs text-stone-400">{item.name}</div>
                     </div>
                   </label>

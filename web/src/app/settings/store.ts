@@ -149,6 +149,7 @@ function normalizeFiles(items: CPARemoteFile[]) {
     files.push({
       name,
       email: String(item.email || "").trim(),
+      proxy_url: String(item.proxy_url || "").trim(),
     });
   }
   return files;

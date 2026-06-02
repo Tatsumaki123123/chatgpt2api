@@ -175,13 +175,18 @@ def list_remote_files(pool: dict) -> list[dict]:
             continue
         name = str(item.get("name") or "").strip()
         email = str(item.get("email") or item.get("account") or "").strip()
+        proxy_url = str(item.get("proxy_url") or item.get("proxyUrl") or "").strip()
         if not name:
             continue
-        items.append({"name": name, "email": email})
+        items.append({"name": name, "email": email, "proxy_url": proxy_url})
     return items
 
 
-def fetch_remote_access_token(pool: dict, file_name: str) -> tuple[str | None, str | None]:
+def fetch_remote_access_token(
+        pool: dict,
+        file_name: str,
+        file_meta: dict | None = None,
+) -> tuple[dict | None, str | None]:
     base_url = str(pool.get("base_url") or "").strip()
     secret_key = str(pool.get("secret_key") or "").strip()
     file_name = str(file_name or "").strip()
@@ -206,7 +211,18 @@ def fetch_remote_access_token(pool: dict, file_name: str) -> tuple[str | None, s
     access_token = str(payload.get("access_token") or "").strip()
     if not access_token:
         return None, "missing access_token"
-    return access_token, None
+
+    proxy_url = str(
+        payload.get("proxy_url")
+        or payload.get("proxyUrl")
+        or (file_meta or {}).get("proxy_url")
+        or (file_meta or {}).get("proxyUrl")
+        or ""
+    ).strip()
+    item = {"access_token": access_token}
+    if proxy_url:
+        item["proxy_url"] = proxy_url
+    return item, None
 
 
 class CPAImportService:
@@ -267,19 +283,32 @@ class CPAImportService:
     def _run_import(self, pool_id: str, pool: dict, names: list[str]) -> None:
         self._update_job(pool_id, status="running")
 
-        tokens: list[str] = []
+        account_items: list[dict] = []
+        file_meta_by_name: dict[str, dict] = {}
+        try:
+            file_meta_by_name = {
+                str(item.get("name") or "").strip(): item
+                for item in list_remote_files(pool)
+                if isinstance(item, dict) and str(item.get("name") or "").strip()
+            }
+        except Exception:
+            file_meta_by_name = {}
+
         max_workers = min(16, max(1, len(names)))
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            future_map = {executor.submit(fetch_remote_access_token, pool, name): name for name in names}
+            future_map = {
+                executor.submit(fetch_remote_access_token, pool, name, file_meta_by_name.get(name)): name
+                for name in names
+            }
             for future in as_completed(future_map):
                 file_name = future_map[future]
                 try:
-                    token, error = future.result()
+                    account_item, error = future.result()
                 except Exception as exc:
-                    token, error = None, str(exc)
+                    account_item, error = None, str(exc)
 
-                if token:
-                    tokens.append(token)
+                if account_item:
+                    account_items.append(account_item)
                 else:
                     self._append_error(pool_id, file_name, error or "unknown error")
 
@@ -287,7 +316,7 @@ class CPAImportService:
                 failed = len(current.get("errors") or [])
                 self._update_job(pool_id, completed=int(current.get("completed") or 0) + 1, failed=failed)
 
-        if not tokens:
+        if not account_items:
             current = self._config.get_import_job(pool_id) or {}
             self._update_job(
                 pool_id,
@@ -297,7 +326,8 @@ class CPAImportService:
             )
             return
 
-        add_result = account_service.add_accounts(tokens)
+        tokens = [str(item.get("access_token") or "").strip() for item in account_items if item.get("access_token")]
+        add_result = account_service.add_account_items(account_items)
         refresh_result = account_service.refresh_accounts(tokens)
         current = self._config.get_import_job(pool_id) or {}
         self._update_job(

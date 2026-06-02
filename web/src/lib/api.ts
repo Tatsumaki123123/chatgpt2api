@@ -19,6 +19,7 @@ export type Account = {
   last_refresh?: string | null;
   refresh_token?: string | null;
   user_id?: string | null;
+  proxy_url?: string | null;
   limits_progress?: Array<{
     feature_name?: string;
     remaining?: number;
@@ -66,6 +67,8 @@ export type AccountImportPayload = {
   account_id?: string;
   last_refresh?: string;
   refresh_token?: string;
+  proxy_url?: string;
+  proxyUrl?: string;
   [key: string]: unknown;
 };
 
@@ -432,6 +435,7 @@ export async function updateAccount(
     type?: AccountType;
     status?: AccountStatus;
     quota?: number;
+    proxy_url?: string;
   },
 ) {
   return httpRequest<AccountUpdateResponse>("/api/accounts/update", {
@@ -813,6 +817,7 @@ export type CPAPool = {
 export type CPARemoteFile = {
   name: string;
   email: string;
+  proxy_url?: string;
 };
 
 export type CPAImportJob = {

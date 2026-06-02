@@ -74,7 +74,7 @@ class AccountService:
     def _normalize_account(self, item: dict) -> dict | None:
         if not isinstance(item, dict):
             return None
-        access_token = item.get("access_token") or ""
+        access_token = str(item.get("access_token") or item.get("accessToken") or "").strip()
         if not access_token:
             return None
         normalized = dict(item)
@@ -89,6 +89,7 @@ class AccountService:
         normalized["limits_progress"] = limits_progress if isinstance(limits_progress, list) else []
         normalized["default_model_slug"] = normalized.get("default_model_slug") or None
         normalized["restore_at"] = normalized.get("restore_at") or None
+        normalized["proxy_url"] = str(normalized.get("proxy_url") or normalized.get("proxyUrl") or "").strip()
         normalized["success"] = int(normalized.get("success") or 0)
         normalized["fail"] = int(normalized.get("fail") or 0)
         normalized["last_used_at"] = normalized.get("last_used_at")
@@ -218,9 +219,54 @@ class AccountService:
                    and (token := item.get("access_token") or "")
             ]
 
+    @staticmethod
+    def _item_access_token(item: dict) -> str:
+        return str(item.get("access_token") or item.get("accessToken") or "").strip()
+
     def add_account_items(self, items: list[dict]) -> dict:
-        tokens = [str(item.get("access_token") or "").strip() for item in items if isinstance(item, dict)]
-        return self.add_accounts(tokens)
+        payloads: dict[str, dict] = {}
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+            access_token = self._item_access_token(item)
+            if not access_token:
+                continue
+            payload = dict(item)
+            payload["access_token"] = access_token
+            if "proxy_url" not in payload and "proxyUrl" in payload:
+                payload["proxy_url"] = payload.get("proxyUrl")
+            payloads[access_token] = {**payloads.get(access_token, {}), **payload}
+
+        if not payloads:
+            return {"added": 0, "skipped": 0, "items": self.list_accounts()}
+
+        with self._lock:
+            added = 0
+            skipped = 0
+            for access_token, payload in payloads.items():
+                current = self._accounts.get(access_token)
+                if current is None:
+                    added += 1
+                    self._cumulative_total += 1
+                    self._save_cumulative_total()
+                    current = {"created_at": self._now()}
+                else:
+                    skipped += 1
+                account = self._normalize_account(
+                    {
+                        **current,
+                        **payload,
+                        "access_token": access_token,
+                        "type": str(payload.get("type") or current.get("type") or "free"),
+                    }
+                )
+                if account is not None:
+                    self._accounts[access_token] = account
+            self._save_accounts()
+            items = [dict(item) for item in self._accounts.values()]
+            log_service.add(LOG_TYPE_ACCOUNT, f"新增 {added} 个账号，跳过 {skipped} 个",
+                            {"added": added, "skipped": skipped})
+        return {"added": added, "skipped": skipped, "items": items}
 
     def add_accounts(self, tokens: list[str]) -> dict:
         tokens = list(dict.fromkeys(token for token in tokens if token))

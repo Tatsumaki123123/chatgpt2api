@@ -194,6 +194,7 @@ function AccountsPageContent() {
   const [pageSize, setPageSize] = useState("10");
   const [editingAccount, setEditingAccount] = useState<Account | null>(null);
   const [editStatus, setEditStatus] = useState<AccountStatus>("正常");
+  const [editProxyUrl, setEditProxyUrl] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -230,7 +231,9 @@ function AccountsPageContent() {
     const normalizedQuery = query.trim().toLowerCase();
     return accounts.filter((account) => {
       const searchMatched =
-        normalizedQuery.length === 0 || (account.email ?? "").toLowerCase().includes(normalizedQuery);
+        normalizedQuery.length === 0
+        || (account.email ?? "").toLowerCase().includes(normalizedQuery)
+        || (account.proxy_url ?? "").toLowerCase().includes(normalizedQuery);
       const typeMatched = typeFilter === "all" || displayAccountType(account) === typeFilter;
       const statusMatched = statusFilter === "all" || account.status === statusFilter;
       return searchMatched && typeMatched && statusMatched;
@@ -336,6 +339,7 @@ function AccountsPageContent() {
   const openEditDialog = (account: Account) => {
     setEditingAccount(account);
     setEditStatus(account.status);
+    setEditProxyUrl(account.proxy_url || "");
   };
 
   const handleUpdateAccount = async () => {
@@ -347,6 +351,7 @@ function AccountsPageContent() {
     try {
       const data = await updateAccount(editingAccount.access_token, {
         status: editStatus,
+        proxy_url: editProxyUrl.trim(),
       });
       setAccounts(data.items);
       setSelectedIds((prev) => prev.filter((id) => data.items.some((item) => item.access_token === id)));
@@ -450,7 +455,7 @@ function AccountsPageContent() {
           <DialogHeader className="gap-2">
             <DialogTitle>编辑账户</DialogTitle>
             <DialogDescription className="text-sm leading-6">
-              手动修改账号状态。
+              手动修改账号状态和账号级代理。
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
@@ -470,6 +475,15 @@ function AccountsPageContent() {
                     ))}
                 </SelectContent>
               </Select>
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-stone-700">代理地址</label>
+              <Input
+                value={editProxyUrl}
+                onChange={(event) => setEditProxyUrl(event.target.value)}
+                placeholder="http://user:pass@host:port"
+                className="h-11 rounded-xl border-stone-200 bg-white"
+              />
             </div>
           </div>
           <DialogFooter className="pt-2">
@@ -655,7 +669,7 @@ function AccountsPageContent() {
             </div>
 
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[920px] text-left">
+              <table className="w-full min-w-[1040px] text-left">
                 <thead className="border-b border-stone-100 text-[11px] text-stone-400 uppercase tracking-[0.18em]">
                   <tr>
                     <th className="w-12 px-4 py-3">
@@ -668,6 +682,7 @@ function AccountsPageContent() {
                     <th className="w-28 px-4 py-3">类型</th>
                     <th className="w-24 px-4 py-3">状态</th>
                     <th className="w-56 px-4 py-3">账号信息</th>
+                    <th className="w-24 px-4 py-3">代理</th>
                     <th className="w-24 px-4 py-3">额度</th>
                     <th className="w-40 px-4 py-3">恢复时间</th>
                     <th className="w-18 px-4 py-3">成功</th>
@@ -733,6 +748,17 @@ function AccountsPageContent() {
                         </td>
                         <td className="px-4 py-3">
                           <div className="text-xs leading-5 text-stone-500">{renderPrivacyEmail(account.email)}</div>
+                        </td>
+                        <td className="px-4 py-3">
+                          {account.proxy_url ? (
+                            <Badge variant="success" className="rounded-md" title={account.proxy_url}>
+                              已配置
+                            </Badge>
+                          ) : (
+                            <Badge variant="secondary" className="rounded-md bg-stone-100 text-stone-500">
+                              未配置
+                            </Badge>
+                          )}
                         </td>
                         <td className="px-4 py-3">
                           <Badge variant="info" className="rounded-md">
