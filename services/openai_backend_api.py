@@ -44,6 +44,15 @@ DEFAULT_CLIENT_BUILD_NUMBER = "5955942"
 DEFAULT_POW_SCRIPT = "https://chatgpt.com/backend-api/sentinel/sdk.js"
 CODEX_IMAGE_MODEL = "codex-gpt-image-2"
 
+# 进程级缓存：缓存首页 bootstrap 结果，避免每次请求都重新下载 chatgpt.com 首页
+_bootstrap_cache_lock = __import__("threading").Lock()
+_bootstrap_cache: dict[str, Any] = {
+    "pow_script_sources": [],
+    "pow_data_build": "",
+    "cached_at": 0.0,
+}
+_BOOTSTRAP_CACHE_TTL = 600  # 10 分钟刷新一次
+
 
 class OpenAIBackendAPI:
     """ChatGPT Web 后端封装。
@@ -916,16 +925,30 @@ class OpenAIBackendAPI:
             response.close()
 
     def _bootstrap(self) -> None:
-        """预热首页，并提取 PoW 相关脚本引用。"""
+        """预热首页，并提取 PoW 相关脚本引用。结果进程级缓存 10 分钟，避免每次请求都下载首页。"""
+        global _bootstrap_cache
+        now = time.time()
+        with _bootstrap_cache_lock:
+            cached_at = _bootstrap_cache["cached_at"]
+            if cached_at and (now - cached_at) < _BOOTSTRAP_CACHE_TTL and _bootstrap_cache["pow_script_sources"]:
+                self.pow_script_sources = list(_bootstrap_cache["pow_script_sources"])
+                self.pow_data_build = _bootstrap_cache["pow_data_build"]
+                return
         response = self.session.get(
             self.base_url + "/",
             headers=self._bootstrap_headers(),
             timeout=30,
         )
         ensure_ok(response, "bootstrap")
-        self.pow_script_sources, self.pow_data_build = parse_pow_resources(response.text)
-        if not self.pow_script_sources:
-            self.pow_script_sources = [DEFAULT_POW_SCRIPT]
+        sources, data_build = parse_pow_resources(response.text)
+        if not sources:
+            sources = [DEFAULT_POW_SCRIPT]
+        with _bootstrap_cache_lock:
+            _bootstrap_cache["pow_script_sources"] = list(sources)
+            _bootstrap_cache["pow_data_build"] = data_build
+            _bootstrap_cache["cached_at"] = time.time()
+        self.pow_script_sources = sources
+        self.pow_data_build = data_build
 
     def _get_chat_requirements(self) -> ChatRequirements:
         """获取当前模式对话所需的 sentinel token。"""
